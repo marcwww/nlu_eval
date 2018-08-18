@@ -34,8 +34,10 @@ if __name__ == '__main__':
                                padding_idx=SEQ.vocab.stoi[PAD],
                                stack_depth=opt.stack_depth)
 
+    location = opt.gpu if torch.cuda.is_available() and opt.gpu != -1 else 'cpu'
+    device = torch.device(location)
     model = nets.TextualEntailmentModel(encoder=encoder,
-                                        nclasses=len(LBL.vocab.itos))
+                                        nclasses=len(LBL.vocab.itos)).to(device)
 
     utils.init_model(model)
     criterion = nn.CrossEntropyLoss()
