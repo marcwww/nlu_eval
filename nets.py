@@ -42,7 +42,8 @@ class EncoderSRNN(nn.Module):
         self.W_down = nn.Parameter(torch.Tensor(W_down), requires_grad=False)
         self.W_push = self.W_down
 
-        self.tau = nn.Parameter(torch.Tensor(1))
+        # self.tau = nn.Parameter(torch.Tensor(1))
+        self.tau = 1
         self.zero = nn.Parameter(torch.zeros(1), requires_grad=False)
 
     def update_stack(self, stack,
