@@ -148,8 +148,8 @@ class TextualEntailmentModel(nn.Module):
         lens2 = len_total2 - mask2.sum(dim=0)
 
         # output: (len_total, bsz, hdim)
-        lens1 = torch.LongTensor(lens1.data)
-        lens2 = torch.LongTensor(lens2.data)
+        lens1 = torch.LongTensor(lens1.data.cpu())
+        lens2 = torch.LongTensor(lens2.data.cpu())
         outputs1 = res1['outputs']
         outputs2 = res2['outputs']
         fhid1 = torch.cat([outputs1[l - 1, b, :].unsqueeze(0) for l, b in zip(lens1, range(bsz1))],
