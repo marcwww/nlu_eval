@@ -46,10 +46,11 @@ def valid_rte(model, valid_iter):
             # len_total, bsz = seq1.shape
             res1, res2, res_clf = model(seq1, seq2)
 
-            acts1 = res1['act'][:, 0, :]
-            acts2 = res2['act'][:, 0, :]
-            acts1_lst.append(acts1)
-            acts2_lst.append(acts2)
+            for i in range(bsz):
+                acts1 = res1['act'][:, i, :]
+                acts2 = res2['act'][:, i, :]
+                acts1_lst.append(acts1)
+                acts2_lst.append(acts2)
 
             pred = res_clf.max(dim=1)[1].cpu().numpy()
             lbl = lbl.cpu().numpy()
