@@ -34,8 +34,8 @@ class EncoderSRNN(nn.Module):
 
         self.empty_elem = nn.Parameter(torch.Tensor(1, self.sdim))
 
+        # shift matrix for stack
         W_up, W_down = utils.shift_matrix(stack_size)
-
         W_pop = W_up
         for i in range(self.sdepth - 1):
             W_pop = np.matmul(W_pop, W_up)
@@ -48,6 +48,7 @@ class EncoderSRNN(nn.Module):
         self.tau = nn.Parameter(torch.Tensor(1).uniform_(0, 1))
         # self.tau = 1
         self.zero = nn.Parameter(torch.zeros(1), requires_grad=False)
+        self.pad = nn.Parameter(torch.LongTensor([padding_idx]), requires_grad=False)
 
     def update_stack(self, stack,
                      p_push, p_pop, p_noop,
@@ -68,11 +69,33 @@ class EncoderSRNN(nn.Module):
         stack_pop = self.W_pop.matmul(stack)
         stack_pop = self.W_push.matmul(stack_pop)
         stack_pop[:, 0, :] += u_val
+        # fill the stack with empty elements
+        stack_pop[:, self.ssz - self.sdepth + 1:, :] += self.empty_elem
 
         stack_noop = stack
 
         stack  = p_push * stack_push + p_pop * stack_pop + p_noop * stack_noop
         return stack
+
+    def update_buf(self, buf,
+                   p_push, p_pop, p_noop):
+
+        device = buf.device
+        T = buf.shape[1]
+        W_up, W_down = utils.shift_matrix(T)
+        W_down = torch.Tensor(W_down).to(device)
+
+        # buf: (bsz, T, edim)
+        p_push = p_push.unsqueeze(-1)
+        p_pop = p_pop.unsqueeze(-1)
+        p_noop = p_noop.unsqueeze(-1)
+
+        buf_push = buf
+        buf_pop = W_down.matmul(buf)
+        buf_noop = buf
+
+        buf = p_push * buf_push + p_pop * buf_pop + p_noop * buf_noop
+        return buf
 
     def forward(self, inputs):
 
@@ -82,23 +105,31 @@ class EncoderSRNN(nn.Module):
                                       self.ssz,
                                       self.sdim)
 
-        # inputs: (length, bsz)
+        # inputs: (N, bsz)
         # stacks: (bsz, ssz, sdim)
         # embs: (length, bsz, edim)
+        N = len(inputs)
+        T = 2 * N -1
+        pads = self.pad.expand(T - N, bsz)
+        pads = self.embedding(pads)
         embs = self.embedding(inputs)
-        # inputs(length,bsz)->embd(length,bsz,embdsz)
+
+        # bufs: (T, bsz, edim)
+        buf = torch.cat([embs, pads], dim=0)
 
         outputs = []
+        top_elems = []
         acts = []
-        for emb in embs:
+        for t in range(T):
             # stack_vals: (bsz, stack_depth * sdim)
             # catenate all the readed vectors:
             tops = stack[:, :self.sdepth, :].contiguous(). \
                 view(bsz,
                      self.sdepth * self.sdim)
 
+            input = buf[t]
             # emb: (bsz, embdsz)
-            mhid= self.emb2hid(emb) + self.hid2hid(hid) + self.stack2hid(tops)
+            mhid= self.emb2hid(input) + self.hid2hid(hid) + self.stack2hid(tops)
 
             # act: (bsz, nacts)
             # act = self.hid2act(hid)
@@ -110,16 +141,19 @@ class EncoderSRNN(nn.Module):
             gamma = 1 + torch.log(1 + torch.exp(gamma))
             act = F.softmax(act, dim=-1)
             act_sharpened = act ** gamma
-            act_sharpened= torch.div(act_sharpened, torch.sum(act_sharpened, dim=-1).view(-1, 1) + 1e-16)
+            act_sharpened = torch.div(act_sharpened, torch.sum(act_sharpened, dim=-1).view(-1, 1) + 1e-16)
 
             # act = F.gumbel_softmax(act, tau=self.tau)
 
             # p_push, p_pop, p_noop: (bsz, 1)
             p_push, p_pop, p_noop = act_sharpened.chunk(len(ACTS), dim=-1)
+            buf = self.update_buf(buf.transpose(0, 1), p_push, p_pop, p_noop).\
+                transpose(0, 1)
+
             # _, act_chosen = torch.topk(act_sharpened, k=1, dim=-1)
             acts.append(act.unsqueeze(0))
 
-            # push_vals: (bsz, sdim)
+            # push_val: (bsz, sdim)
             push_val = self.hid2stack(hid)
 
             # push_val: (bsz, ssz)
@@ -129,18 +163,23 @@ class EncoderSRNN(nn.Module):
             stack = self.update_stack(stack,
                                        p_push, p_pop, p_noop,
                                        push_val, u_val)
+            top_elem = stack[:, 0, :].unsqueeze(0)
+            top_elems.append(top_elem)
 
             hid = self.nonLinear(mhid)
             outputs.append(hid.unsqueeze(0))
 
         outputs = torch.cat(outputs, dim=0)
-        # acts: (len_total, bsz, nacts)
+        # acts: (T, bsz, nacts)
         acts = torch.cat(acts, dim=0)
+        # top_elems: (T, bsz, sdim)
+        top_elems = torch.cat(top_elems, dim=0)
 
         return {'outputs':outputs,
                 'hid':hid,
                 'stack':stack,
-                'act':acts}
+                'act':acts,
+                'top':top_elems}
 
 class TextualEntailmentModel(nn.Module):
 
@@ -159,18 +198,22 @@ class TextualEntailmentModel(nn.Module):
         len_total1, bsz1 = seq1.shape
         len_total2, bsz2 = seq2.shape
         mask1 = seq1.data.eq(self.padding_idx)
-        lens1 = len_total1 - mask1.sum(dim=0)
+        # - 1 for <eos>
+        lens1 = len_total1 - mask1.sum(dim=0) - 1
         mask2 = seq2.data.eq(self.padding_idx)
-        lens2 = len_total2 - mask2.sum(dim=0)
+        lens2 = len_total2 - mask2.sum(dim=0) - 1
 
         # output: (len_total, bsz, hdim)
         lens1 = torch.LongTensor(lens1.data.cpu())
         lens2 = torch.LongTensor(lens2.data.cpu())
-        outputs1 = res1['outputs']
-        outputs2 = res2['outputs']
-        fhid1 = torch.cat([outputs1[l - 1, b, :].unsqueeze(0) for l, b in zip(lens1, range(bsz1))],
+        Ts1 = 2 * lens1 - 1
+        Ts2 = 2 * lens2 - 1
+
+        top_elems1 = res1['top']
+        top_elems2 = res2['top']
+        fhid1 = torch.cat([top_elems1[T - 1, b, :].unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
                           dim=0)
-        fhid2 = torch.cat([outputs2[l - 1, b, :].unsqueeze(0) for l, b in zip(lens2, range(bsz2))],
+        fhid2 = torch.cat([top_elems2[T - 1, b, :].unsqueeze(0) for T, b in zip(Ts2, range(bsz2))],
                           dim=0)
 
         u1 = fhid1

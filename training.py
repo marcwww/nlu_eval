@@ -11,10 +11,18 @@ from macros import *
 def explain(txt, acts):
     # acts: (seq_len, nacts)
     example = []
-    for w, pact in zip(txt, acts[:len(txt)]):
+    # - 1 for <eos>
+    N = len(txt) - 1
+    T = 2 * N - 1
+    for t in range(T):
+        w = txt[t] if t < len(txt) else PAD
+        pact = acts[t]
         w_str = '%s (%.2f, %.2f, %.2f)' % \
-            (w, pact[0].item(), pact[1].item(), pact[2].item())
+                (w, pact[0].item(), pact[1].item(), pact[2].item())
         example.append(w_str)
+        _, chosen_act = torch.topk(acts[t], k=1)
+        if chosen_act == ACTS['pop']:
+            txt.insert(t + 1, w)
 
     return '|'.join(example)
 
