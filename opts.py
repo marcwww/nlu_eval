@@ -4,12 +4,12 @@ from macros import *
 
 def model_opts(parser):
     group = parser.add_argument_group('model')
-    group.add_argument('-edim', type=int, default=300)
-    group.add_argument('-hdim', type=int, default=300)
-    group.add_argument('-sdim', type=int, default=300)
+    group.add_argument('-edim', type=int, default=50)
+    group.add_argument('-hdim', type=int, default=50)
+    group.add_argument('-sdim', type=int, default=50)
     group.add_argument('-stack_size', type=int, default=100)
     group.add_argument('-stack_depth', type=int, default=2)
-    group.add_argument('-pretrain', type=str, default="glove.6B.300d")
+    group.add_argument('-pretrain', type=str, default="glove.6B.50d")
     group.add_argument('-fine_tuning', default=False, action='store_true')
 
 def train_opts(parser):
