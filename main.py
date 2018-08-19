@@ -24,7 +24,8 @@ if __name__ == '__main__':
                         fvalid=opt.fvalid,
                         bsz=opt.bsz,
                         min_freq=opt.min_freq,
-                        device=opt.gpu)
+                        device=opt.gpu,
+                        pretrain=opt.pretrain)
 
     encoder = nets.EncoderSRNN(voc_size=len(SEQ.vocab.itos),
                                edim=opt.edim,
@@ -32,6 +33,7 @@ if __name__ == '__main__':
                                stack_size=opt.stack_size,
                                sdim=opt.sdim,
                                padding_idx=SEQ.vocab.stoi[PAD],
+                               fine_tuning=opt.fine_tuning,
                                stack_depth=opt.stack_depth)
 
     location = opt.gpu if torch.cuda.is_available() and opt.gpu != -1 else 'cpu'
@@ -39,6 +41,8 @@ if __name__ == '__main__':
     model = nets.TextualEntailmentModel(encoder=encoder,
                                         nclasses=len(LBL.vocab.itos)).to(device)
     utils.init_model(model)
+    if opt.pretrain:
+        model.encoder.embedding.weight.data.copy_(SEQ.vocab.vectors)
 
     if opt.load_idx != -1:
         basename = "{}-epoch-{}".format(opt.name, opt.load_idx)

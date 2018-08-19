@@ -3,7 +3,7 @@ from macros import *
 import os
 import crash_on_ipy
 
-def build_iters(ftrain, fvalid, bsz, device, min_freq):
+def build_iters(ftrain, fvalid, bsz, device, min_freq, pretrain):
 
     IDX = torchtext.data.Field(sequential=False, use_vocab=False)
     SEQ = torchtext.data.Field(sequential=True, use_vocab=True,
@@ -26,7 +26,7 @@ def build_iters(ftrain, fvalid, bsz, device, min_freq):
                                               ('seq2', SEQ),
                                               ('lbl', LBL)])
 
-    SEQ.build_vocab(train, min_freq=min_freq)
+    SEQ.build_vocab(train, min_freq=min_freq, vectors=pretrain)
     LBL.build_vocab(train)
 
     valid = torchtext.data.TabularDataset(path=fvalid,

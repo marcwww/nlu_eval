@@ -8,7 +8,7 @@ import utils
 class EncoderSRNN(nn.Module):
     def __init__(self, voc_size, edim, hdim,
                  stack_size, sdim, padding_idx,
-                 stack_depth = 2):
+                 fine_tuning, stack_depth = 2):
         super(EncoderSRNN, self).__init__()
         # here input dimention is equal to hidden dimention
         self.edim = edim
@@ -20,6 +20,7 @@ class EncoderSRNN(nn.Module):
         self.embedding = nn.Embedding(voc_size,
                                       edim,
                                       padding_idx=padding_idx)
+        self.embedding.weight.requires_grad = fine_tuning
         self.nonLinear=nn.ReLU()
         # self.gru = nn.GRU(hidden_size, hidden_size)
         self.hid2hid = nn.Linear(hdim, hdim)
@@ -86,7 +87,8 @@ class EncoderSRNN(nn.Module):
         embs = self.embedding(inputs)
         # inputs(length,bsz)->embd(length,bsz,embdsz)
 
-        outputs=[]
+        outputs = []
+        acts = []
         for emb in embs:
             # stack_vals: (bsz, stack_depth * sdim)
             # catenate all the readed vectors:
@@ -109,6 +111,8 @@ class EncoderSRNN(nn.Module):
 
             # p_push, p_pop, p_noop: (bsz, 1)
             p_push, p_pop, p_noop = act_sharpened.chunk(len(ACTS), dim=-1)
+            _, act_chosen = torch.topk(act_sharpened, k=1, dim=-1)
+            acts.append(act_chosen)
 
             # push_vals: (bsz, sdim)
             push_val = self.hid2stack(hid)
@@ -128,7 +132,8 @@ class EncoderSRNN(nn.Module):
 
         return {'outputs':outputs,
                 'hid':hid,
-                'stack':stack}
+                'stack':stack,
+                'act':act_chosen}
 
 class TextualEntailmentModel(nn.Module):
 
