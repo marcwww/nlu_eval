@@ -19,7 +19,7 @@ def avg_vector(i, n):
 
 def init_model(model):
     for p in model.parameters():
-        if p.dim() > 1:
+        if p.dim() > 1 and p.requires_grad:
             xavier_uniform_(p)
 
 def progress_bar(percent, loss, epoch):
