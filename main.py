@@ -38,8 +38,17 @@ if __name__ == '__main__':
     device = torch.device(location)
     model = nets.TextualEntailmentModel(encoder=encoder,
                                         nclasses=len(LBL.vocab.itos)).to(device)
-
     utils.init_model(model)
+
+    if opt.load_idx != -1:
+        basename = "{}-epoch-{}".format(opt.name, opt.load_idx)
+        model_fname = basename + ".model"
+        location = {'cuda:' + str(opt.gpu): 'cuda:' + str(opt.gpu)} if opt.gpu != -1 else 'cpu'
+        model_path = os.path.join(RES, model_fname)
+        model_dict = torch.load(model_path, map_location=location)
+        model.load_state_dict(model_dict)
+        print('Loaded from ' + model_path)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()),
         lr=opt.lr, weight_decay=opt.wdecay)

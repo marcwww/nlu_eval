@@ -25,6 +25,7 @@ class EncoderSRNN(nn.Module):
         self.hid2hid = nn.Linear(hdim, hdim)
         self.emb2hid = nn.Linear(edim, hdim)
         self.hid2act = nn.Linear(hdim, len(ACTS))
+        self.hid2gamma = nn.Linear(hdim, 1)
         self.hid2stack = nn.Linear(hdim, sdim)
         self.stack2hid = nn.Linear(sdim * self.sdepth, hdim)
         self.stack2u = nn.Linear(sdim * self.sdepth, sdim)
@@ -87,33 +88,35 @@ class EncoderSRNN(nn.Module):
 
         outputs=[]
         for emb in embs:
-            # emb: (bsz, embdsz)
-            mhid= self.emb2hid(emb) + self.hid2hid(hid)
-
             # stack_vals: (bsz, stack_depth * sdim)
             # catenate all the readed vectors:
             tops = stack[:, :self.sdepth, :].contiguous(). \
                 view(bsz,
                      self.sdepth * self.sdim)
 
-            # r: (bsz, hdim)
-            r = self.stack2hid(tops)
-            u_val = self.stack2u(tops)
-
-            mhid += r
+            # emb: (bsz, embdsz)
+            mhid= self.emb2hid(emb) + self.hid2hid(hid) + self.stack2hid(tops)
 
             # act: (bsz, nacts)
             act = self.hid2act(hid)
-            act = F.gumbel_softmax(act, tau=self.tau)
+            gamma = self.hid2gamma(hid)
+            gamma = 1+torch.log(1+torch.exp(gamma))
+            act = F.softmax(act, dim=-1)
+            act_sharpened = act ** gamma
+            act_sharpened= torch.div(act_sharpened, torch.sum(act_sharpened, dim=-1).view(-1, 1) + 1e-16)
+
+            # act = F.gumbel_softmax(act, tau=self.tau)
 
             # p_push, p_pop, p_noop: (bsz, 1)
-            p_push, p_pop, p_noop = act.chunk(len(ACTS), dim=-1)
+            p_push, p_pop, p_noop = act_sharpened.chunk(len(ACTS), dim=-1)
 
             # push_vals: (bsz, sdim)
             push_val = self.hid2stack(hid)
 
-            # push_vals: bsz * nstack * stack_elem_size
+            # push_val: (bsz, ssz)
             push_val = self.nonLinear(push_val)
+            # u_val: (bsz, ssz) unified stack element
+            u_val = self.stack2u(tops)
             stack = self.update_stack(stack,
                                        p_push, p_pop, p_noop,
                                        push_val, u_val)
