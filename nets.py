@@ -133,7 +133,7 @@ class EncoderSRNN(nn.Module):
         return {'outputs':outputs,
                 'hid':hid,
                 'stack':stack,
-                'act':act_chosen}
+                'act':acts}
 
 class TextualEntailmentModel(nn.Module):
 
