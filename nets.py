@@ -22,11 +22,12 @@ class EncoderSRNN(nn.Module):
                                       padding_idx=padding_idx)
         self.embedding.weight.requires_grad = fine_tuning
         self.nonLinear=nn.ReLU()
-        # self.gru = nn.GRU(hidden_size, hidden_size)
+
         self.hid2hid = nn.Linear(hdim, hdim)
         self.emb2hid = nn.Linear(edim, hdim)
-        self.hid2act = nn.Linear(hdim, len(ACTS))
-        self.hid2gamma = nn.Linear(hdim, 1)
+
+        self.hid2inst = nn.Linear(hdim, len(ACTS) + 1)
+
         self.hid2stack = nn.Linear(hdim, sdim)
         self.stack2hid = nn.Linear(sdim * self.sdepth, hdim)
         self.stack2u = nn.Linear(sdim * self.sdepth, sdim)
@@ -100,9 +101,13 @@ class EncoderSRNN(nn.Module):
             mhid= self.emb2hid(emb) + self.hid2hid(hid) + self.stack2hid(tops)
 
             # act: (bsz, nacts)
-            act = self.hid2act(hid)
-            gamma = self.hid2gamma(hid)
-            gamma = 1+torch.log(1+torch.exp(gamma))
+            # act = self.hid2act(hid)
+            # inst: (bsz, nacts + 1) probability of actions and gamma
+            inst = self.hid2inst(hid)
+            act = inst[:, :len(ACTS)]
+            gamma = inst[:, len(ACTS):]
+
+            gamma = 1 + torch.log(1 + torch.exp(gamma))
             act = F.softmax(act, dim=-1)
             act_sharpened = act ** gamma
             act_sharpened= torch.div(act_sharpened, torch.sum(act_sharpened, dim=-1).view(-1, 1) + 1e-16)
