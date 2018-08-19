@@ -1,7 +1,8 @@
 import os
 ACTS = {'push':0,
         'pop':1,
-        'noop':2}
+        # 'noop':2
+        }
 PAD = '<pad>'
 UNK = '<unk>'
 EOS = '<eos>'

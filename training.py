@@ -17,8 +17,8 @@ def explain(txt, acts):
     for t in range(T):
         w = txt[t] if t < len(txt) else PAD
         pact = acts[t]
-        w_str = '%s (%.2f, %.2f, %.2f)' % \
-                (w, pact[0].item(), pact[1].item(), pact[2].item())
+        w_str = '%s (%.2f, %.2f)' % \
+                (w, pact[0].item(), pact[1].item())
         example.append(w_str)
         _, chosen_act = torch.topk(acts[t], k=1)
         if chosen_act == ACTS['pop']:
@@ -70,7 +70,7 @@ def valid_rte(model, valid_iter):
         premise = explain(txt1_lst[idx], acts1_lst[idx])
         hypothesis = explain(txt2_lst[idx], acts2_lst[idx])
         lbl = lbl_lst[idx]
-        print('[%d] lbl:%s\n push/pop/noop\n p:%s\n h:%s' % (idx, lbl, premise, hypothesis))
+        print('[%d] lbl:%s\n push/pop\n p:%s\n h:%s' % (idx, lbl, premise, hypothesis))
 
     accurracy = accuracy_score(true_lst, pred_lst)
     precision = precision_score(true_lst, pred_lst, average='macro')

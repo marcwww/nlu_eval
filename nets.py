@@ -51,7 +51,7 @@ class EncoderSRNN(nn.Module):
         self.pad = nn.Parameter(torch.LongTensor([padding_idx]), requires_grad=False)
 
     def update_stack(self, stack,
-                     p_push, p_pop, p_noop,
+                     p_push, p_pop,
                      push_val, u_val):
 
         # stack: (bsz, ssz, sdim)
@@ -60,7 +60,6 @@ class EncoderSRNN(nn.Module):
         # p_xact: bsz * nstack
         p_push = p_push.unsqueeze(-1)
         p_pop = p_pop.unsqueeze(-1)
-        p_noop = p_noop.unsqueeze(-1)
 
         bsz, ssz, sdim  = stack.shape
         stack_push = self.W_push.matmul(stack)
@@ -72,13 +71,11 @@ class EncoderSRNN(nn.Module):
         # fill the stack with empty elements
         stack_pop[:, self.ssz - self.sdepth + 1:, :] += self.empty_elem
 
-        stack_noop = stack
-
-        stack  = p_push * stack_push + p_pop * stack_pop + p_noop * stack_noop
+        stack  = p_push * stack_push + p_pop * stack_pop
         return stack
 
     def update_buf(self, buf,
-                   p_push, p_pop, p_noop):
+                   p_push, p_pop):
 
         device = buf.device
         T = buf.shape[1]
@@ -88,13 +85,12 @@ class EncoderSRNN(nn.Module):
         # buf: (bsz, T, edim)
         p_push = p_push.unsqueeze(-1)
         p_pop = p_pop.unsqueeze(-1)
-        p_noop = p_noop.unsqueeze(-1)
 
         buf_push = buf
         buf_pop = W_down.matmul(buf)
-        buf_noop = buf
+        # buf_noop = buf
 
-        buf = p_push * buf_push + p_pop * buf_pop + p_noop * buf_noop
+        buf = p_push * buf_push + p_pop * buf_pop
         return buf
 
     def forward(self, inputs):
@@ -146,8 +142,10 @@ class EncoderSRNN(nn.Module):
             # act = F.gumbel_softmax(act, tau=self.tau)
 
             # p_push, p_pop, p_noop: (bsz, 1)
-            p_push, p_pop, p_noop = act_sharpened.chunk(len(ACTS), dim=-1)
-            buf = self.update_buf(buf.transpose(0, 1), p_push, p_pop, p_noop).\
+            p_push, p_pop = \
+                act_sharpened.chunk(len(ACTS), dim=-1)
+
+            buf = self.update_buf(buf.transpose(0, 1), p_push, p_pop).\
                 transpose(0, 1)
 
             # _, act_chosen = torch.topk(act_sharpened, k=1, dim=-1)
@@ -161,7 +159,7 @@ class EncoderSRNN(nn.Module):
             # u_val: (bsz, ssz) unified stack element
             u_val = self.nonLinear(self.stack2u(tops))
             stack = self.update_stack(stack,
-                                       p_push, p_pop, p_noop,
+                                       p_push, p_pop,
                                        push_val, u_val)
             top_elem = stack[:, 0, :].unsqueeze(0)
             top_elems.append(top_elem)
@@ -240,6 +238,8 @@ class TextualEntailmentModel(nn.Module):
 
         dis1 = torch.norm(sum_push1 + 1 - sum_pop1, p=2)/bsz1
         dis2 = torch.norm(sum_push2 + 1 - sum_pop2, p=2)/bsz2
+
+
 
         return res1, res2, res_clf, dis1, dis2
 
