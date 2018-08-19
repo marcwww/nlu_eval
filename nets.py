@@ -112,7 +112,7 @@ class EncoderSRNN(nn.Module):
             # p_push, p_pop, p_noop: (bsz, 1)
             p_push, p_pop, p_noop = act_sharpened.chunk(len(ACTS), dim=-1)
             _, act_chosen = torch.topk(act_sharpened, k=1, dim=-1)
-            acts.append(act_chosen)
+            acts.append(act_chosen.unsqueeze(0))
 
             # push_vals: (bsz, sdim)
             push_val = self.hid2stack(hid)
@@ -120,7 +120,7 @@ class EncoderSRNN(nn.Module):
             # push_val: (bsz, ssz)
             push_val = self.nonLinear(push_val)
             # u_val: (bsz, ssz) unified stack element
-            u_val = self.stack2u(tops)
+            u_val = self.nonLinear(self.stack2u(tops))
             stack = self.update_stack(stack,
                                        p_push, p_pop, p_noop,
                                        push_val, u_val)
@@ -129,6 +129,7 @@ class EncoderSRNN(nn.Module):
             outputs.append(hid.unsqueeze(0))
 
         outputs = torch.cat(outputs, dim=0)
+        acts = torch.cat(acts, dim=0).squeeze(-1)
 
         return {'outputs':outputs,
                 'hid':hid,
