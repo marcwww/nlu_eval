@@ -11,6 +11,7 @@ def model_opts(parser):
     group.add_argument('-stack_depth', type=int, default=2)
     group.add_argument('-pretrain', type=str, default="glove.6B.50d")
     group.add_argument('-fine_tuning', default=False, action='store_true')
+    group.add_argument('-coef_dis', type=float, default = 1)
 
 def train_opts(parser):
     group = parser.add_argument_group('train')

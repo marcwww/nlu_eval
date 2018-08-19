@@ -224,7 +224,24 @@ class TextualEntailmentModel(nn.Module):
         u = torch.cat([u1, u2, u3, u4], dim=-1)
         res_clf = self.clf(u)
 
-        return res1, res2, res_clf
+
+        # acts: (T, bsz, nacts)
+        acts1 = res1['act']
+        # sum_push: (bsz, 1)
+        sum_push1 = torch.cat([acts1[:T, b, ACTS['push']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+                             dim=0)
+        sum_pop1 = torch.cat([acts1[:T, b, ACTS['pop']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+                             dim=0)
+        acts2 = res2['act']
+        sum_push2 = torch.cat([acts2[:T, b, ACTS['push']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+                             dim=0)
+        sum_pop2 = torch.cat([acts2[:T, b, ACTS['pop']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+                            dim=0)
+
+        dis1 = torch.norm(sum_push1 + 1 - sum_pop1, p=2)/bsz1
+        dis2 = torch.norm(sum_push2 + 1 - sum_pop2, p=2)/bsz2
+
+        return res1, res2, res_clf, dis1, dis2
 
 
 
