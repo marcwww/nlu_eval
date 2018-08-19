@@ -136,7 +136,7 @@ class TextualEntailmentModel(nn.Module):
         super(TextualEntailmentModel, self).__init__()
         self.encoder = encoder
         self.padding_idx = encoder.padding_idx
-        self.clf = nn.Sequential(nn.Linear(3 * encoder.hdim, encoder.hdim),
+        self.clf = nn.Sequential(nn.Linear(4 * encoder.hdim, encoder.hdim),
                                  nn.ReLU(),
                                  nn.Linear(encoder.hdim, nclasses))
         self.nclasses = nclasses
@@ -161,11 +161,12 @@ class TextualEntailmentModel(nn.Module):
         fhid2 = torch.cat([outputs2[l - 1, b, :].unsqueeze(0) for l, b in zip(lens2, range(bsz2))],
                           dim=0)
 
-        u1 = fhid1 + fhid2
-        u2 = torch.abs(fhid1 - fhid2)
-        u3 = fhid1 * fhid2
+        u1 = fhid1
+        u2 = fhid2
+        u3 = torch.abs(fhid1 - fhid2)
+        u4 = fhid1 * fhid2
 
-        u = torch.cat([u1, u2, u3], dim=-1)
+        u = torch.cat([u1, u2, u3, u4], dim=-1)
         res = self.clf(u)
 
         return res
