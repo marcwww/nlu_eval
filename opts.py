@@ -13,8 +13,8 @@ def model_opts(parser):
 def train_opts(parser):
     group = parser.add_argument_group('train')
     group.add_argument('-ftrain', type=str, default=os.path.join(RTE, 'train.tsv'))
-    # group.add_argument('-fvalid', type=str, default=os.path.join(RTE, 'dev.tsv'))
-    group.add_argument('-fvalid', type=str, default=os.path.join(RTE, 'test.tsv'))
+    group.add_argument('-fvalid', type=str, default=os.path.join(RTE, 'dev.tsv'))
+    # group.add_argument('-fvalid', type=str, default=os.path.join(RTE, 'test.tsv'))
     # group.add_argument('-bsz', type=int, default=64)
     group.add_argument('-load_idx', type=int, default=-1)
     group.add_argument('-bsz', type=int, default=64)
