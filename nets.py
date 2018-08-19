@@ -116,8 +116,8 @@ class EncoderSRNN(nn.Module):
 
             # p_push, p_pop, p_noop: (bsz, 1)
             p_push, p_pop, p_noop = act_sharpened.chunk(len(ACTS), dim=-1)
-            _, act_chosen = torch.topk(act_sharpened, k=1, dim=-1)
-            acts.append(act_chosen.unsqueeze(0))
+            # _, act_chosen = torch.topk(act_sharpened, k=1, dim=-1)
+            acts.append(act.unsqueeze(0))
 
             # push_vals: (bsz, sdim)
             push_val = self.hid2stack(hid)
@@ -134,7 +134,8 @@ class EncoderSRNN(nn.Module):
             outputs.append(hid.unsqueeze(0))
 
         outputs = torch.cat(outputs, dim=0)
-        acts = torch.cat(acts, dim=0).squeeze(-1)
+        # acts: (len_total, bsz, nacts)
+        acts = torch.cat(acts, dim=0)
 
         return {'outputs':outputs,
                 'hid':hid,
@@ -178,9 +179,9 @@ class TextualEntailmentModel(nn.Module):
         u4 = fhid1 * fhid2
 
         u = torch.cat([u1, u2, u3, u4], dim=-1)
-        res = self.clf(u)
+        res_clf = self.clf(u)
 
-        return res
+        return res1, res2, res_clf
 
 
 
