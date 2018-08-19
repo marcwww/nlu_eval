@@ -4,6 +4,8 @@ from torch.nn.utils import clip_grad_norm
 from sklearn.metrics import \
     accuracy_score, precision_score, \
     recall_score, f1_score
+import os
+from macros import *
 
 def valid_rte(model, valid_iter):
     pred_lst = []
@@ -34,7 +36,7 @@ def train_rte(model, iters, opt, criterion, optim):
     train_iter = iters['train']
     valid_iter = iters['valid']
 
-    # valid(model, valid_iter, opt)
+    print(valid_rte(model, valid_iter))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             idx, seq1, seq2, lbl = \
@@ -63,4 +65,6 @@ def train_rte(model, iters, opt, criterion, optim):
         if (epoch + 1) % opt.save_per == 0:
             basename = "{}-epoch-{}".format(opt.name, epoch)
             model_fname = basename + ".model"
-            torch.save(model.state_dict(), model_fname)
+            save_path = os.path.join(RES, model_fname)
+            print('Saving to ' + save_path)
+            torch.save(model.state_dict(), save_path)

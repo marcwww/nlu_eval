@@ -7,3 +7,4 @@ UNK = '<unk>'
 EOS = '<eos>'
 DATA = 'data/'
 RTE = os.path.join(DATA, 'RTE')
+RES = 'res/'
