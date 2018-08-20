@@ -55,8 +55,10 @@ def valid_rte(model, valid_iter):
                 lbl_lst.append(lbl_str)
 
             # len_total, bsz = seq1.shape
-            res1, res2, res_clf, dis1, dis2, diff1, diff2 =\
-                model(seq1, seq2)
+            res= model(seq1, seq2)
+            res_clf = res['res_clf']
+            res1 = res['res1']
+            res2 = res['res2']
 
             for i in range(bsz):
                 acts1 = res1['act'][:, i, :]
@@ -97,11 +99,16 @@ def train_rte(model, iters, opt, criterion, optim):
             model.train()
             model.zero_grad()
             # len_total, bsz = seq1.shape
-            res1, res2, res_clf, dis1, dis2, diff1, diff2 = \
-                model(seq1, seq2)
+            res = model(seq1, seq2)
+            res_clf = res['res_clf']
 
             loss = criterion(res_clf.view(-1, model.nclasses), lbl)
-            loss += opt.coef_dis * (dis1 + dis2) + opt.coef_diff * (diff1 + diff2)
+
+            # dis1 = res['dis1']
+            # dis2 = res['dis2']
+            # diff1 = res['diff1']
+            # diff2 = res['diff2']
+            # loss += opt.coef_dis * (dis1 + dis2) + opt.coef_diff * (diff1 + diff2)
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()

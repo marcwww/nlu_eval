@@ -250,7 +250,14 @@ class TextualEntailmentModel(nn.Module):
         diff1 = diff1.sum() / bsz1
         diff2 = diff2.sum() / bsz2
 
-        return res1, res2, res_clf, dis1, dis2, diff1, diff2
+        return {'res1': res1,
+                'res2': res2,
+                'res_clf':res_clf,
+                'dis1':dis1,
+                'dis2':dis2,
+                'diff1': diff1,
+                'diff2': diff2}
+
 
 
 
