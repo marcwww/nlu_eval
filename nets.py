@@ -32,7 +32,8 @@ class EncoderSRNN(nn.Module):
         self.stack2hid = nn.Linear(sdim * self.sdepth, hdim)
         self.stack2u = nn.Linear(sdim * self.sdepth, sdim)
 
-        self.empty_elem = nn.Parameter(torch.Tensor(1, self.sdim))
+        # self.empty_elem = nn.Parameter(torch.Tensor(1, self.sdim))
+        self.empty_elem = nn.Parameter(torch.zeros(1, self.sdim), requires_grad=False)
 
         # shift matrix for stack
         W_up, W_down = utils.shift_matrix(stack_size)
