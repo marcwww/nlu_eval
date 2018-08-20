@@ -15,7 +15,10 @@ def explain(txt, acts):
     N = len(txt) - 1
     T = 2 * N - 1
     for t in range(T):
-        w = txt[t] if t < len(txt) else PAD
+        if t >= len(txt):
+            break
+        # w = txt[t] if t < len(txt) else PAD
+        w = txt[t]
         pact = acts[t]
         w_str = '%s (%.2f, %.2f)' % \
                 (w, pact[0].item(), pact[1].item())
@@ -52,7 +55,8 @@ def valid_rte(model, valid_iter):
                 lbl_lst.append(lbl_str)
 
             # len_total, bsz = seq1.shape
-            res1, res2, res_clf, dis1, dis2 = model(seq1, seq2)
+            res1, res2, res_clf, dis1, dis2, diff1, diff2 =\
+                model(seq1, seq2)
 
             for i in range(bsz):
                 acts1 = res1['act'][:, i, :]
@@ -65,12 +69,14 @@ def valid_rte(model, valid_iter):
             pred_lst.extend(pred)
             true_lst.extend(lbl)
 
+    print('-'*20 + '4 examples begin' + '-'*20)
     indices_chosen = np.random.choice(len(lbl_lst), 4)
     for idx in indices_chosen:
         premise = explain(txt1_lst[idx], acts1_lst[idx])
         hypothesis = explain(txt2_lst[idx], acts2_lst[idx])
         lbl = lbl_lst[idx]
         print('[%d] lbl:%s\n push/pop\n p:%s\n h:%s' % (idx, lbl, premise, hypothesis))
+    print('-' * 20 + '4 examples end' + '-' * 20)
 
     accurracy = accuracy_score(true_lst, pred_lst)
     precision = precision_score(true_lst, pred_lst, average='macro')
@@ -91,10 +97,11 @@ def train_rte(model, iters, opt, criterion, optim):
             model.train()
             model.zero_grad()
             # len_total, bsz = seq1.shape
-            res1, res2, res_clf, dis1, dis2 = model(seq1, seq2)
+            res1, res2, res_clf, dis1, dis2, diff1, diff2 = \
+                model(seq1, seq2)
 
             loss = criterion(res_clf.view(-1, model.nclasses), lbl)
-            loss += opt.coef_dis * (dis1 + dis2)
+            loss += opt.coef_dis * (dis1 + dis2) + opt.coef_diff * (diff1 + diff2)
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()

@@ -226,22 +226,31 @@ class TextualEntailmentModel(nn.Module):
         # acts: (T, bsz, nacts)
         acts1 = res1['act']
         # sum_push: (bsz, 1)
-        sum_push1 = torch.cat([acts1[:T, b, ACTS['push']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+        sum_push1 = torch.cat([(acts1[:T, b, ACTS['push']].sum(dim=0) / T.item()).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
                              dim=0)
-        sum_pop1 = torch.cat([acts1[:T, b, ACTS['pop']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+        sum_pop1 = torch.cat([((acts1[:T, b, ACTS['pop']].sum(dim=0) + 1) / T.item()).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
                              dim=0)
+        # diff: (bsz, 1)
+        diff1 = torch.cat(
+            [(torch.norm((acts1[:T, b, ACTS['push']] - acts1[:T, b, ACTS['pop']]), dim=0) / T.item()).unsqueeze(0)
+                for T, b in zip(Ts1, range(bsz1))], dim=0)
+
         acts2 = res2['act']
-        sum_push2 = torch.cat([acts2[:T, b, ACTS['push']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+        sum_push2 = torch.cat([(acts2[:T, b, ACTS['push']].sum(dim=0) / T.item()).unsqueeze(0) for T, b in zip(Ts2, range(bsz2))],
                              dim=0)
-        sum_pop2 = torch.cat([acts2[:T, b, ACTS['pop']].sum(dim=0).unsqueeze(0) for T, b in zip(Ts1, range(bsz1))],
+        sum_pop2 = torch.cat([((acts2[:T, b, ACTS['pop']].sum(dim=0).unsqueeze(0) + 1) / T.item()) for T, b in zip(Ts2, range(bsz2))],
                             dim=0)
+        diff2 = torch.cat(
+            [(torch.norm((acts2[:T, b, ACTS['push']] - acts2[:T, b, ACTS['pop']]), dim=0) / T.item()).unsqueeze(0)
+                for T, b in zip(Ts2, range(bsz2))], dim=0)
 
-        dis1 = torch.norm(sum_push1 + 1 - sum_pop1, p=2)/bsz1
-        dis2 = torch.norm(sum_push2 + 1 - sum_pop2, p=2)/bsz2
+        dis1 = torch.norm(sum_push1 - sum_pop1, p=2)/bsz1
+        dis2 = torch.norm(sum_push2 - sum_pop2, p=2)/bsz2
 
+        diff1 = diff1.sum() / bsz1
+        diff2 = diff2.sum() / bsz2
 
-
-        return res1, res2, res_clf, dis1, dis2
+        return res1, res2, res_clf, dis1, dis2, diff1, diff2
 
 
 
