@@ -126,6 +126,8 @@ class EncoderSRNN(nn.Module):
             input = buf[t]
             # emb: (bsz, embdsz)
             mhid= self.emb2hid(input) + self.hid2hid(hid) + self.stack2hid(tops)
+            hid = self.nonLinear(mhid)
+            outputs.append(hid.unsqueeze(0))
 
             # act: (bsz, nacts)
             # act = self.hid2act(hid)
@@ -163,9 +165,6 @@ class EncoderSRNN(nn.Module):
                                        push_val, u_val)
             top_elem = stack[:, 0, :].unsqueeze(0)
             top_elems.append(top_elem)
-
-            hid = self.nonLinear(mhid)
-            outputs.append(hid.unsqueeze(0))
 
         outputs = torch.cat(outputs, dim=0)
         # acts: (T, bsz, nacts)
@@ -221,7 +220,6 @@ class TextualEntailmentModel(nn.Module):
 
         u = torch.cat([u1, u2, u3, u4], dim=-1)
         res_clf = self.clf(u)
-
 
         # acts: (T, bsz, nacts)
         acts1 = res1['act']
