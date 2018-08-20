@@ -127,14 +127,15 @@ class EncoderSRNN(nn.Module):
 
             input = buf[t]
             # emb: (bsz, embdsz)
-            mhid= self.emb2hid(input) + self.hid2hid(hid) + self.stack2hid(tops)
+            ihid = self.emb2hid(input) + self.stack2hid(tops)
+            mhid= self.hid2hid(hid) + ihid
             hid = self.nonLinear(mhid)
             outputs.append(hid.unsqueeze(0))
 
             # act: (bsz, nacts)
             # act = self.hid2act(hid)
             # inst: (bsz, nacts + 1) probability of actions and gamma
-            inst = self.hid2inst(hid)
+            inst = self.hid2inst(ihid)
             act = inst[:, :len(ACTS)]
             gamma = inst[:, len(ACTS):]
 
