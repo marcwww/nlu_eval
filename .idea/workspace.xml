@@ -24,14 +24,14 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="3" />
-          <entry key="py" value="9799" />
+          <entry key="py" value="9810" />
           <entry key="tsv" value="231" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="234" />
-          <entry key="Python" value="9799" />
+          <entry key="Python" value="9810" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -53,13 +53,13 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/nets.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="35" column="85" selection-start-line="35" selection-start-column="85" selection-end-line="35" selection-end-column="85" />
+            <state relative-caret-position="498">
+              <caret line="36" column="82" selection-start-line="36" selection-start-column="82" selection-end-line="36" selection-end-column="82" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
-                <marker date="1534732864853" expanded="true" signature="2839:2997" ph="..." />
-                <marker date="1534732864853" expanded="true" signature="2839:3254" ph="..." />
-                <marker date="1534732864853" expanded="true" signature="6208:9358" ph="..." />
+                <marker date="1534733147627" expanded="true" signature="2947:3105" ph="..." />
+                <marker date="1534733147627" expanded="true" signature="2947:3362" ph="..." />
+                <marker date="1534733147627" expanded="true" signature="6316:9466" ph="..." />
               </folding>
             </state>
           </provider>
@@ -496,13 +496,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/nets.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="35" column="85" selection-start-line="35" selection-start-column="85" selection-end-line="35" selection-end-column="85" />
+        <state relative-caret-position="498">
+          <caret line="36" column="82" selection-start-line="36" selection-start-column="82" selection-end-line="36" selection-end-column="82" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-            <marker date="1534732864853" expanded="true" signature="2839:2997" ph="..." />
-            <marker date="1534732864853" expanded="true" signature="2839:3254" ph="..." />
-            <marker date="1534732864853" expanded="true" signature="6208:9358" ph="..." />
+            <marker date="1534733147627" expanded="true" signature="2947:3105" ph="..." />
+            <marker date="1534733147627" expanded="true" signature="2947:3362" ph="..." />
+            <marker date="1534733147627" expanded="true" signature="6316:9466" ph="..." />
           </folding>
         </state>
       </provider>
