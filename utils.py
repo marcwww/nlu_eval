@@ -1,5 +1,20 @@
 import numpy as np
 from torch.nn.init import xavier_uniform_
+import torch
+
+def one_hot_matrix(stoi, device, edim):
+
+    assert len(stoi) <= edim, \
+        'embedding dimension must be larger than voc_size'
+
+    voc_size = len(stoi)
+    res = torch.zeros(voc_size,
+                      edim,
+                      requires_grad=False)
+    for i in range(voc_size):
+        res[i][i] = 1
+
+    return res.to(device)
 
 def shift_matrix(n):
     W_up = np.eye(n)
@@ -26,7 +41,7 @@ def progress_bar(percent, loss, epoch):
     """Prints the progress until the next report."""
 
     fill = int(percent * 40)
-    str_disp = "\r[{}{}]: {:.4f}/epoch {:d}".format('=' * fill,
+    str_disp = "\r[%s%s]: %.2f/epoch %d" % ('=' * fill,
                                          ' ' * (40 - fill),
                                          percent,
                                          epoch)

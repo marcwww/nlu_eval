@@ -8,6 +8,8 @@ import argparse
 import training
 from torch import nn
 from torch import optim
+from tasks import prop_entailment
+
 
 if __name__ == '__main__':
     parser = argparse. \
@@ -19,33 +21,44 @@ if __name__ == '__main__':
     opts.train_opts(parser)
     opt = parser.parse_args()
 
-    train_iter, valid_iter, SEQ, LBL = \
-                        preproc.build_iters(ftrain=opt.ftrain,
-                        fvalid=opt.fvalid,
-                        bsz=opt.bsz,
-                        min_freq=opt.min_freq,
-                        device=opt.gpu,
-                        pretrain=opt.pretrain)
+    build_iters = None
+    train = None
+    Model = None
+    criterion = None
+    if opt.task == 'prop-entail':
+        build_iters = prop_entailment.build_iters
+        train = prop_entailment.train
+        Model = prop_entailment.Model
 
-    encoder = nets.EncoderSRNN(voc_size=len(SEQ.vocab.itos),
-                               edim=opt.edim,
-                               hdim=opt.hdim,
-                               stack_size=opt.stack_size,
-                               sdim=opt.sdim,
-                               padding_idx=SEQ.vocab.stoi[PAD],
-                               fine_tuning=opt.fine_tuning,
-                               stack_depth=opt.stack_depth)
+    res_iters = build_iters(ftrain=opt.ftrain,
+                fvalid=opt.fvalid,
+                bsz=opt.bsz,
+                device=opt.gpu)
+
+    train_iter = res_iters['train_iter']
+    valid_iter = res_iters['valid_iter']
+    SEQ = res_iters['SEQ']
+    LBL = res_iters['LBL']
+
+    embedding = nn.Embedding(num_embeddings=len(SEQ.vocab.itos),
+                 embedding_dim=opt.edim,
+                 padding_idx=SEQ.vocab.stoi[PAD])
 
     location = opt.gpu if torch.cuda.is_available() and opt.gpu != -1 else 'cpu'
     device = torch.device(location)
-    model = nets.TextualEntailmentModel(encoder=encoder,
-                                        nclasses=len(LBL.vocab.itos)).to(device)
+
+    if opt.emb_type == 'one-hot':
+        one_hot_mtrx = utils.one_hot_matrix(SEQ.vocab.stoi, device, opt.edim)
+        embedding.weight.data.copy_(one_hot_mtrx)
+
+    encoder = nets.EncoderSimpRNN(idim=opt.edim,
+                                  hdim=opt.hdim)
+
+    model = Model(encoder, embedding).to(device)
     utils.init_model(model)
-    if opt.pretrain:
-        model.encoder.embedding.weight.data.copy_(SEQ.vocab.vectors)
 
     if opt.load_idx != -1:
-        basename = "{}-epoch-{}".format(opt.name, opt.load_idx)
+        basename = "{}-epoch-{}".format(opt.task, opt.load_idx)
         model_fname = basename + ".model"
         location = {'cuda:' + str(opt.gpu): 'cuda:' + str(opt.gpu)} if opt.gpu != -1 else 'cpu'
         model_path = os.path.join(RES, model_fname)
@@ -55,13 +68,9 @@ if __name__ == '__main__':
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()),
-        lr=opt.lr, weight_decay=opt.wdecay)
+                           lr=opt.lr,
+                           weight_decay=opt.wdecay)
 
-    training.train_rte(model,
-                       {'train': train_iter,
-                        'valid':valid_iter},
-                       opt,
-                       criterion,
-                       optimizer)
-
+    iters = {'train': train_iter, 'valid': valid_iter}
+    train(model, iters, opt, criterion, optimizer)
 

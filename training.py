@@ -41,15 +41,19 @@ def valid_rte(model, valid_iter):
     with torch.no_grad():
         model.eval()
         for i, batch in enumerate(valid_iter):
-            idx, seq1, seq2, lbl = \
+            indices, seq1, seq2, lbl = \
                 batch.idx, batch.seq1, batch.seq2, batch.lbl
 
-            bsz = idx.shape[0]
+            bsz = indices.shape[0]
 
             for i in range(bsz):
-                txt1, txt2, lbl_str = valid_iter.dataset.examples[idx[i].item()].seq1, \
-                            valid_iter.dataset.examples[idx[i].item()].seq2, \
-                            valid_iter.dataset.examples[idx[i].item()].lbl
+                example = valid_iter.dataset.examples[indices[i].item()]
+                idx, txt1, txt2, lbl_str = example.idx, \
+                                           example.seq1, \
+                                           example.seq2, \
+                                           example.lbl
+
+                assert indices[i].item() == int(idx), 'indices not match'
                 txt1_lst.append(txt1)
                 txt2_lst.append(txt2)
                 lbl_lst.append(lbl_str)

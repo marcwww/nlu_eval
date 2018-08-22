@@ -154,7 +154,7 @@ class EncoderSRNN(nn.Module):
                 transpose(0, 1)
 
             # _, act_chosen = torch.topk(act_sharpened, k=1, dim=-1)
-            acts.append(act.unsqueeze(0))
+            acts.append(act_sharpened.unsqueeze(0))
 
             # push_val: (bsz, sdim)
             push_val = self.hid2stack(hid)
@@ -180,6 +180,19 @@ class EncoderSRNN(nn.Module):
                 'stack':stack,
                 'act':acts,
                 'top':top_elems}
+
+class EncoderSimpRNN(nn.Module):
+    def __init__(self, idim, hdim):
+        super(EncoderSimpRNN, self).__init__()
+        self.idim = idim
+        self.hdim = hdim
+        self.rnn = nn.RNN(input_size=idim,
+                          hidden_size=hdim)
+
+    def forward(self, input):
+        output, hid = self.rnn(input)
+        return {'output': output,
+                'hid': hid}
 
 class TextualEntailmentModel(nn.Module):
 
