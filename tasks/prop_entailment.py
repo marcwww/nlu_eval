@@ -11,12 +11,14 @@ from sklearn.metrics import accuracy_score, \
 
 class Example(object):
 
-    def __init__(self, seq, lbl):
-        self.seq = seq
+    def __init__(self, seq1, seq2, lbl):
+        self.seq = self.tokenizer(seq1) + \
+                   [SEP] + self.tokenizer(seq2)
         self.lbl = int(lbl)
 
-def tokenizer(seq):
-    return list(seq)
+    def tokenizer(self, seq):
+        return list(seq)
+
 
 def load_examples(fname):
     examples = []
@@ -25,8 +27,7 @@ def load_examples(fname):
         for line in f:
             seq1, seq2, lbl, _, _, _ = \
                 line.split(',')
-            seq = seq1 + SEP + seq2
-            examples.append(Example(seq, lbl))
+            examples.append(Example(seq1, seq2, lbl))
 
     return examples
 
@@ -35,7 +36,6 @@ def build_iters(ftrain, fvalid, bsz, device):
     examples_train = load_examples(ftrain)
 
     SEQ = torchtext.data.Field(sequential=True, use_vocab=True,
-                               tokenize=tokenizer,
                                pad_token=PAD,
                                unk_token=UNK,
                                eos_token=None)
@@ -132,12 +132,15 @@ class Model(nn.Module):
         self.clf = nn.Linear(self.hdim, 2)
         self.padding_idx = embedding.padding_idx
 
-    def forward(self, input):
-        embs = self.embedding(input)
-        res = self.encoder(embs)
-        mask = input.data.eq(self.padding_idx)
-        len_total, bsz = input.shape
+    def forward(self, seq):
+        mask = seq.data.eq(self.padding_idx)
+        len_total, bsz = seq.shape
         lens = len_total - mask.sum(dim=0)
+
+        embs = self.embedding(seq)
+        input = {'embs': embs,
+                 'lens': lens}
+        res = self.encoder(input)
         output = res['output']
         reps = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
                          dim=0)
