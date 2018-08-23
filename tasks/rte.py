@@ -13,7 +13,7 @@ class Example(object):
 
     def __init__(self, seq, lbl):
         self.seq = seq
-        self.lbl = int(lbl)
+        self.lbl = lbl
 
 def tokenizer(seq):
     return list(seq)
@@ -23,8 +23,8 @@ def load_examples(fname):
 
     with open(fname, 'r') as f:
         for line in f:
-            seq1, seq2, lbl, _, _, _ = \
-                line.split(',')
+            idx, seq1, seq2, lbl = \
+                line.split('\t')
             seq = seq1 + SEP + seq2
             examples.append(Example(seq, lbl))
 
@@ -39,11 +39,13 @@ def build_iters(ftrain, fvalid, bsz, device):
                                pad_token=PAD,
                                unk_token=UNK,
                                eos_token=None)
-    LBL = torchtext.data.Field(sequential=False, use_vocab=False)
+    LBL = torchtext.data.Field(sequential=False, use_vocab=True)
 
     train = Dataset(examples_train, fields=[('seq', SEQ),
                                       ('lbl', LBL)])
     SEQ.build_vocab(train)
+    LBL.build_vocab(train)
+
     examples_valid = load_examples(fvalid)
     valid = Dataset(examples_valid, fields=[('seq', SEQ),
                                       ('lbl', LBL)])
@@ -81,9 +83,9 @@ def valid(model, valid_iter):
             true_lst.extend(lbl)
 
     accuracy = accuracy_score(true_lst, pred_lst)
-    precision = precision_score(true_lst, pred_lst)
-    recall = recall_score(true_lst, pred_lst)
-    f1 = f1_score(true_lst, pred_lst)
+    precision = precision_score(true_lst, pred_lst, average='macro')
+    recall = recall_score(true_lst, pred_lst, average='macro')
+    f1 = f1_score(true_lst, pred_lst, average='macro')
 
     return accuracy, precision, recall, f1
 
@@ -99,7 +101,7 @@ def train(model, iters, opt, criterion, optim):
             model.zero_grad()
             res = model(seq)
             res_clf = res['res_clf']
-            loss = criterion(res_clf.view(-1, 2), lbl)
+            loss = criterion(res_clf.view(-1, 3), lbl)
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()
@@ -129,7 +131,7 @@ class Model(nn.Module):
         self.encoder = encoder
         self.embedding = embedding
         self.hdim = self.encoder.hdim
-        self.clf = nn.Linear(self.hdim, 2)
+        self.clf = nn.Linear(self.hdim, 3)
         self.padding_idx = embedding.padding_idx
 
     def forward(self, input):

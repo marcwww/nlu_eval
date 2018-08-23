@@ -4,6 +4,8 @@ import torch
 from macros import *
 from torch.nn import functional as F
 import utils
+from torch.nn.utils.rnn import pack_padded_sequence as pack, \
+    pad_packed_sequence as unpack
 
 class EncoderSRNN(nn.Module):
     def __init__(self, voc_size, edim, hdim,
@@ -190,9 +192,82 @@ class EncoderSimpRNN(nn.Module):
                           hidden_size=hdim)
 
     def forward(self, input):
-        output, hid = self.rnn(input)
+        embs = input['embs']
+        lens = input['lens']
+        bsz = embs.shape[1]
+        output, _ = self.rnn(embs)
+        hid = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
+                         dim=0).unsqueeze(0)
+
         return {'output': output,
                 'hid': hid}
+
+class EncoderLSTM(nn.Module):
+    def __init__(self, idim, hdim):
+        super(EncoderLSTM, self).__init__()
+        self.idim = idim
+        self.hdim = hdim
+        self.lstm = nn.LSTM(input_size=idim,
+                          hidden_size=hdim)
+        self.h0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
+        self.c0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
+
+    def forward(self, input):
+        embs = input['embs']
+        lens = input['lens']
+
+        lens, perm_idx = lens.sort(dim=0, descending=True)
+        embs = embs[:, perm_idx, :]
+
+        embs_packed = pack(embs, list(lens.data), batch_first=False)
+        bsz = embs.shape[1]
+        h0 = self.h0.expand(1, bsz, self.hdim).contiguous()
+        c0 = self.c0.expand(1, bsz, self.hdim).contiguous()
+
+        output, hid = self.lstm(embs_packed, (h0, c0))
+        output = unpack(output, list(lens.data))[0].transpose(0, 1)
+
+        return {'output': output,
+                'hid': hid}
+
+class DecoderSimpRNN(nn.Module):
+    def __init__(self, idim, hdim):
+        super(DecoderSimpRNN, self).__init__()
+        self.idim = idim
+        self.hdim = hdim
+        self.rnn = nn.RNN(input_size=idim,
+                          hidden_size=hdim)
+
+    def forward(self, input, hid):
+        if type(hid) == tuple:
+            hid = hid[0]
+
+        output, hid = self.rnn(input, hid)
+        return {'output': output,
+                'hid': hid}
+
+
+class DecoderLSTM(nn.Module):
+    def __init__(self, idim, hdim):
+        super(DecoderLSTM, self).__init__()
+        self.idim = idim
+        self.hdim = hdim
+        self.rnn = nn.LSTM(input_size=idim,
+                          hidden_size=hdim)
+        self.c0 = nn.Parameter(torch.zeros(hdim),
+                               requires_grad=False)
+
+    def forward(self, input, hid):
+        bsz = input.shape[1]
+        if type(hid) != tuple:
+            c0 = self.c0.expand(1, bsz, self.hdim).\
+                contiguous()
+            hid = (hid, c0)
+
+        output, hid = self.rnn(input, hid)
+        return {'output': output,
+                'hid': hid}
+
 
 class TextualEntailmentModel(nn.Module):
 

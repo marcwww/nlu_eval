@@ -8,7 +8,7 @@ import argparse
 import training
 from torch import nn
 from torch import optim
-from tasks import prop_entailment
+from tasks import prop_entailment, rte, scan
 
 
 if __name__ == '__main__':
@@ -30,6 +30,16 @@ if __name__ == '__main__':
         train = prop_entailment.train
         Model = prop_entailment.Model
 
+    if opt.task == 'rte':
+        build_iters = rte.build_iters
+        train = rte.train
+        Model = rte.Model
+
+    if opt.task == 'scan':
+        build_iters = scan.build_iters
+        train = scan.train
+        Model = scan.Model
+
     res_iters = build_iters(ftrain=opt.ftrain,
                 fvalid=opt.fvalid,
                 bsz=opt.bsz,
@@ -37,25 +47,73 @@ if __name__ == '__main__':
 
     train_iter = res_iters['train_iter']
     valid_iter = res_iters['valid_iter']
-    SEQ = res_iters['SEQ']
-    LBL = res_iters['LBL']
 
-    embedding = nn.Embedding(num_embeddings=len(SEQ.vocab.itos),
-                 embedding_dim=opt.edim,
-                 padding_idx=SEQ.vocab.stoi[PAD])
+    embedding = None
+    embedding_enc = None
+    embedding_dec = None
+    SEQ = None
+    SRC = None
+    TAR = None
+    if 'SEQ' in res_iters.keys():
+        SEQ = res_iters['SEQ']
+        embedding = nn.Embedding(num_embeddings=len(SEQ.vocab.itos),
+                                 embedding_dim=opt.edim,
+                                 padding_idx=SEQ.vocab.stoi[PAD])
+
+    if 'SRC' in res_iters.keys() and 'TAR' in res_iters.keys():
+        SRC = res_iters['SRC']
+        embedding_enc = nn.Embedding(num_embeddings=len(SRC.vocab.itos),
+                                     embedding_dim=opt.edim,
+                                     padding_idx=SRC.vocab.stoi[PAD])
+
+        TAR = res_iters['TAR']
+        embedding_dec = nn.Embedding(num_embeddings=len(TAR.vocab.itos),
+                                 embedding_dim=opt.edim,
+                                 padding_idx=TAR.vocab.stoi[PAD])
 
     location = opt.gpu if torch.cuda.is_available() and opt.gpu != -1 else 'cpu'
     device = torch.device(location)
 
     if opt.emb_type == 'one-hot':
-        one_hot_mtrx = utils.one_hot_matrix(SEQ.vocab.stoi, device, opt.edim)
-        embedding.weight.data.copy_(one_hot_mtrx)
+        if embedding is not None:
+            one_hot_mtrx = utils.one_hot_matrix(SEQ.vocab.stoi, device, opt.edim)
+            embedding.weight.data.copy_(one_hot_mtrx)
 
-    encoder = nets.EncoderSimpRNN(idim=opt.edim,
-                                  hdim=opt.hdim)
+        if embedding_enc is not None:
+            one_hot_mtrx = utils.one_hot_matrix(SRC.vocab.stoi, device, opt.edim)
+            embedding_enc.weight.data.copy_(one_hot_mtrx)
 
-    model = Model(encoder, embedding).to(device)
-    utils.init_model(model)
+        if embedding_dec is not None:
+            one_hot_mtrx = utils.one_hot_matrix(TAR.vocab.stoi, device, opt.edim)
+            embedding_dec.weight.data.copy_(one_hot_mtrx)
+
+    encoder = None
+    decoder = None
+    if opt.enc_type == 'simp-rnn':
+        encoder = nets.EncoderSimpRNN(idim=opt.edim,
+                                      hdim=opt.hdim)
+
+    if opt.enc_type == 'lstm':
+        encoder = nets.EncoderLSTM(idim=opt.edim,
+                                   hdim=opt.hdim)
+
+    if opt.dec_type == 'simp-rnn':
+        decoder = nets.DecoderSimpRNN(idim=opt.edim,
+                                      hdim=opt.hdim)
+
+    if opt.dec_type == 'lstm':
+        decoder = nets.DecoderLSTM(idim=opt.edim,
+                                      hdim=opt.hdim)
+
+    model = None
+    if TAR is None:
+        model = Model(encoder, embedding).to(device)
+        utils.init_model(model)
+    else:
+        model = Model(encoder, decoder,
+                      embedding_enc, embedding_dec,
+                      TAR.vocab.stoi[SOS]).to(device)
+        utils.init_model(model)
 
     if opt.load_idx != -1:
         basename = "{}-epoch-{}".format(opt.task, opt.load_idx)
@@ -66,7 +124,10 @@ if __name__ == '__main__':
         model.load_state_dict(model_dict)
         print('Loaded from ' + model_path)
 
-    criterion = nn.CrossEntropyLoss()
+    if TAR is None:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        criterion = nn.CrossEntropyLoss(ignore_index=TAR.vocab.stoi[PAD])
     optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()),
                            lr=opt.lr,
                            weight_decay=opt.wdecay)
