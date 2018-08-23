@@ -11,8 +11,8 @@ def model_opts(parser):
     group.add_argument('-stack_depth', type=int, default=2)
     group.add_argument('-fine_tuning', default=False, action='store_true')
     group.add_argument('-emb_type', type=str, default='one-hot')
-    # group.add_argument('-enc_type', type=str, default='lstm')
-    group.add_argument('-enc_type', type=str, default='simp-rnn')
+    group.add_argument('-enc_type', type=str, default='lstm')
+    # group.add_argument('-enc_type', type=str, default='simp-rnn')
     # group.add_argument('-dec_type', type=str, default='simp-rnn')
     group.add_argument('-dec_type', type=str, default='lstm')
 

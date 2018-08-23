@@ -209,6 +209,7 @@ class EncoderLSTM(nn.Module):
         self.hdim = hdim
         self.lstm = nn.LSTM(input_size=idim,
                           hidden_size=hdim)
+                            # num_layers=2)
         self.h0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
         self.c0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
 
@@ -216,16 +217,13 @@ class EncoderLSTM(nn.Module):
         embs = input['embs']
         lens = input['lens']
 
-        lens, perm_idx = lens.sort(dim=0, descending=True)
-        embs = embs[:, perm_idx, :]
-
         embs_packed = pack(embs, list(lens.data), batch_first=False)
         bsz = embs.shape[1]
         h0 = self.h0.expand(1, bsz, self.hdim).contiguous()
         c0 = self.c0.expand(1, bsz, self.hdim).contiguous()
 
         output, hid = self.lstm(embs_packed, (h0, c0))
-        output = unpack(output, list(lens.data))[0].transpose(0, 1)
+        output = unpack(output, batch_first=False)[0]
 
         return {'output': output,
                 'hid': hid}
