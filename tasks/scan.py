@@ -141,13 +141,14 @@ class Model(nn.Module):
         self.embedding_dec = embedding_dec
         self.dec_voc_size = self.embedding_dec.num_embeddings
         self.hdim = self.encoder.hdim
-        self.padding_idx = embedding_enc.padding_idx
+        self.padding_idx_enc = embedding_enc.padding_idx
+        self.padding_idx_dec = embedding_dec.padding_idx
         self.dec_h0 = nn.Parameter(torch.LongTensor([sos_idx]),
                                    requires_grad=False)
         self.clf = nn.Linear(self.hdim, self.dec_voc_size)
 
     def forward(self, src, tar):
-        mask = src.data.eq(self.padding_idx)
+        mask = src.data.eq(self.padding_idx_enc)
         len_total, bsz = src.shape
         lens = len_total - mask.sum(dim=0)
 

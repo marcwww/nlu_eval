@@ -101,8 +101,12 @@ def valid_one(src, pred, tar, rewriting_map, src_itos, tar_itos):
     pred = pred.data.cpu().numpy()
     tar = tar.data.cpu().numpy()
 
-    if pred[-1] != tar[-1]:
-        return 0
+    # if pred[-1] != tar[-1]:
+    #     return 0, len(src[:-1])
+
+    nt = 0
+    nc = 0
+    # print(' '.join([src_itos[i] for i in src]))
 
     src = src[:-1]
     pred = pred[1:-1]
@@ -111,19 +115,22 @@ def valid_one(src, pred, tar, rewriting_map, src_itos, tar_itos):
         pred_tuple = tuple(pred[i * 3: i * 3 + 3])
         tar_tuple = tuple(tar[i * 3: i * 3 + 3])
 
-        # if tar_tuple not in rewriting_map[ch]:
-        #     print(ch)
-        #     print(src_itos[ch])
-        #     print(tar_tuple)
-        #     print(tar_itos[tar_tuple[0]])
-        #     print(rewriting_map[ch])
+        if tar_tuple not in rewriting_map[ch]:
+            print(' '.join([src_itos[i] for i in src]))
+            print(' '.join([tar_itos[i] for i in tar]))
+            print(ch)
+            print(src_itos[ch])
+            print(tar_tuple)
+            print(tar_itos[tar_tuple[0]])
+            print(rewriting_map[ch])
 
         assert tar_tuple in rewriting_map[ch], 'illegal target'
 
-        if pred_tuple not in rewriting_map[ch]:
-            return 0
+        if pred_tuple in rewriting_map[ch]:
+            nc += 1
+        nt += 1
 
-    return 1
+    return nc, nt
 
 def valid(model, valid_iter, rewriting_map):
     nc = 0
@@ -139,15 +146,17 @@ def valid(model, valid_iter, rewriting_map):
             outputs = res['outputs']
             pred = outputs.max(dim=-1)[1]
 
-            mask = tar.data.eq(model.padding_idx)
-            lens = max_length - mask.sum(dim=0)
-            for (l, b) in zip(lens, range(bsz)):
-                valid_res = valid_one(src[:, b],
-                                 pred[:l, b],
-                                 tar[:l, b],
+            mask_src = src.data.eq(model.padding_idx_enc)
+            mask_tar = tar.data.eq(model.padding_idx_dec)
+            lens_src = src.shape[0] - mask_src.sum(dim=0)
+            lens_tar = tar.shape[0] - mask_tar.sum(dim=0)
+            for (l_src, l_tar, b) in zip(lens_src, lens_tar, range(bsz)):
+                nc_one, nt_one = valid_one(src[:l_src, b],
+                                 pred[:l_tar, b],
+                                 tar[:l_tar, b],
                                  rewriting_map, src_itos, tar_itos)
-                nc += valid_res
-                nt += 1
+                nc += nc_one
+                nt += nt_one
 
     return nc/nt
 
@@ -203,13 +212,14 @@ class Model(nn.Module):
         self.embedding_dec = embedding_dec
         self.dec_voc_size = self.embedding_dec.num_embeddings
         self.hdim = self.encoder.hdim
-        self.padding_idx = embedding_enc.padding_idx
+        self.padding_idx_enc = embedding_enc.padding_idx
+        self.padding_idx_dec = embedding_dec.padding_idx
         self.dec_h0 = nn.Parameter(torch.LongTensor([sos_idx]),
                                    requires_grad=False)
         self.clf = nn.Linear(self.hdim, self.dec_voc_size)
 
     def forward(self, src, tar):
-        mask = src.data.eq(self.padding_idx)
+        mask = src.data.eq(self.padding_idx_enc)
         len_total, bsz = src.shape
         lens = len_total - mask.sum(dim=0)
 
