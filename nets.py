@@ -217,13 +217,24 @@ class EncoderLSTM(nn.Module):
         embs = input['embs']
         lens = input['lens']
 
-        embs_packed = pack(embs, list(lens.data), batch_first=False)
-        bsz = embs.shape[1]
+        lens_sorted, perm = lens.sort(0, descending=True)
+        perm_back = [0] * len(perm)
+        for i, idx in enumerate(perm):
+            perm_back[idx] = i
+
+        embs_sorted = embs[:,perm,:]
+
+        embs_packed = pack(embs_sorted, list(lens_sorted.data), batch_first=False)
+        bsz = embs_sorted.shape[1]
         h0 = self.h0.expand(1, bsz, self.hdim).contiguous()
         c0 = self.c0.expand(1, bsz, self.hdim).contiguous()
 
-        output, hid = self.lstm(embs_packed, (h0, c0))
-        output = unpack(output, batch_first=False)[0]
+        output_sorted, hid_sorted = self.lstm(embs_packed, (h0, c0))
+        output_sorted = unpack(output_sorted, batch_first=False)[0]
+
+        output = output_sorted[:, perm_back, :]
+        hid = (hid_sorted[0][:, perm_back, :],
+               hid_sorted[1][:, perm_back, :])
 
         return {'output': output,
                 'hid': hid}

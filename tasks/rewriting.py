@@ -6,13 +6,14 @@ from torch import nn
 from torch.nn.utils import clip_grad_norm
 import numpy as np
 import utils
+import itertools
 from sklearn.metrics import accuracy_score, \
     precision_score, recall_score, f1_score
 
 class Example(object):
 
     def __init__(self, src, tar):
-        self.src = self.tokenizer(src)
+        self.src = self.tokenizer(src)[:-1]
         self.tar = self.tokenizer(tar)
 
     def tokenizer(self, seq):
@@ -24,12 +25,13 @@ def load_examples(fname):
 
     with open(fname, 'r') as f:
         for line in f:
-            src, tar = line.split(' OUT: ')
-            _, src = src.split('IN: ')
-
+            src, tar, _ = line.split('\t')
             examples.append(Example(src, tar))
 
     return examples
+
+def alpha_order(ch):
+    return ord(ch) - ord('A') + 1
 
 def build_iters(ftrain, fvalid, bsz, device):
 
@@ -66,14 +68,82 @@ def build_iters(ftrain, fvalid, bsz, device):
                                          sort_within_batch=True,
                                          device=device)
 
+    src_itos = SRC.vocab.itos
+    src_stoi = SRC.vocab.stoi
+    tar_itos = TAR.vocab.itos
+    tar_stoi = TAR.vocab.stoi
+
+    rewriting_map = {}
+    for i, ch in enumerate(src_itos):
+        if ch in [PAD, UNK, EOS, SOS]:
+            continue
+        # if i == 39:
+        #     print('aaa')
+
+        num = alpha_order(ch[0])
+        if num > 19:
+            num -= 1
+        if len(ch) > 1:
+            num += 25
+
+        # if num == 25:
+        #     print('aaa')
+
+        candis = set()
+        for combi in range(8):
+            a = int(combi / 4) % 2
+            b = int(combi / 2) % 2
+            c = combi % 2
+
+            A = 'A%d_%d' % (num, a + 1)
+            B = 'B%d_%d' % (num, b + 1)
+            C = 'C%d_%d' % (num, c + 1)
+
+            perms = itertools.permutations([tar_stoi[A], tar_stoi[B], tar_stoi[C]], 3)
+            for candi in perms:
+                candis.add(candi)
+        rewriting_map[i] = candis
+
     return {'train_iter': train_iter,
             'valid_iter': valid_iter,
             'SRC': SRC,
-            'TAR': TAR}
+            'TAR': TAR,
+            'rewriting_map': rewriting_map}
 
-def valid(model, valid_iter):
+def valid_one(src, pred, tar, rewriting_map, src_itos, tar_itos):
+    src = src.data.cpu().numpy()
+    pred = pred.data.cpu().numpy()
+    tar = tar.data.cpu().numpy()
+
+    # if pred[-1] != tar[-1]:
+    #     return 0
+
+    src = src[:-1]
+    pred = pred[1:-1]
+    tar = tar[1:-1]
+    for (i, ch) in enumerate(src):
+        pred_tuple = tuple(pred[i * 3: i * 3 + 3])
+        tar_tuple = tuple(tar[i * 3: i * 3 + 3])
+
+        if tar_tuple not in rewriting_map[ch]:
+            print(ch)
+            print(src_itos[ch])
+            print(tar_tuple)
+            print(tar_itos[tar_tuple[0]])
+            print(rewriting_map[ch])
+
+        assert tar_tuple in rewriting_map[ch], 'illegal target'
+
+        if pred_tuple not in rewriting_map[ch]:
+            return 0
+
+    return 1
+
+def valid(model, valid_iter, rewriting_map):
     nc = 0
     nt = 0
+    src_itos = valid_iter.dataset.fields['src'].vocab.itos
+    tar_itos = valid_iter.dataset.fields['tar'].vocab.itos
     with torch.no_grad():
         model.eval()
         for i, batch in enumerate(valid_iter):
@@ -86,9 +156,11 @@ def valid(model, valid_iter):
             mask = tar.data.eq(model.padding_idx)
             lens = max_length - mask.sum(dim=0)
             for (l, b) in zip(lens, range(bsz)):
-                cost = torch.abs(pred[:l, b] - tar[:l, b]).sum().item()
-                if cost == 0:
-                    nc += 1
+                valid_res = valid_one(src[:, b],
+                                 pred[:l, b],
+                                 tar[:l, b],
+                                 rewriting_map, src_itos, tar_itos)
+                nc += valid_res
                 nt += 1
 
     return nc/nt
@@ -96,8 +168,9 @@ def valid(model, valid_iter):
 def train(model, iters, opt, criterion, optim):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
+    rewriting_map = iters['rewriting_map']
 
-    print(valid(model, valid_iter))
+    print(valid(model, valid_iter, rewriting_map))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             src, tar = batch.src, batch.tar
@@ -117,7 +190,7 @@ def train(model, iters, opt, criterion, optim):
 
             if (i + 1) % int(1 / 4 * len(train_iter)) == 0:
                 # print('\r')
-                accurracy = valid(model, valid_iter)
+                accurracy = valid(model, valid_iter, rewriting_map)
                 print('{\'Epoch\':%d, \'Format\':\'a\', \'Metric\':[%.4f]}' %
                       (epoch, accurracy) )
 

@@ -8,7 +8,11 @@ import argparse
 import training
 from torch import nn
 from torch import optim
-from tasks import prop_entailment, rte, scan
+from tasks import prop_entailment, \
+    prop_entailment_2enc, \
+    rewriting, \
+    rte, \
+    scan
 
 
 if __name__ == '__main__':
@@ -30,6 +34,16 @@ if __name__ == '__main__':
         train = prop_entailment.train
         Model = prop_entailment.Model
 
+    if opt.task == 'prop-entail-2enc':
+        build_iters = prop_entailment_2enc.build_iters
+        train = prop_entailment_2enc.train
+        Model = prop_entailment_2enc.Model
+
+    if opt.task == 'rewriting':
+        build_iters = rewriting.build_iters
+        train = rewriting.train
+        Model = rewriting.Model
+
     if opt.task == 'rte':
         build_iters = rte.build_iters
         train = rte.train
@@ -44,9 +58,6 @@ if __name__ == '__main__':
                 fvalid=opt.fvalid,
                 bsz=opt.bsz,
                 device=opt.gpu)
-
-    train_iter = res_iters['train_iter']
-    valid_iter = res_iters['valid_iter']
 
     embedding = None
     embedding_enc = None
@@ -131,7 +142,9 @@ if __name__ == '__main__':
     optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()),
                            lr=opt.lr,
                            weight_decay=opt.wdecay)
+    # optimizer = optim.SGD(params=filter(lambda p: p.requires_grad, model.parameters()),
+    #                        lr=opt.lr,
+    #                        weight_decay=opt.wdecay)
 
-    iters = {'train': train_iter, 'valid': valid_iter}
-    train(model, iters, opt, criterion, optimizer)
+    train(model, res_iters, opt, criterion, optimizer)
 

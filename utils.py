@@ -50,6 +50,12 @@ def progress_bar(percent, loss, epoch):
 
     print(str_disp, end='')
 
+def seq_lens(seq, padding_idx):
+    mask = seq.data.eq(padding_idx)
+    len_total, bsz = seq.shape
+    lens = len_total - mask.sum(dim=0)
+    return lens
+
 if __name__ == '__main__':
     up, down = shift_matrix(3)
     x = np.array([[0,1,2]]).transpose()

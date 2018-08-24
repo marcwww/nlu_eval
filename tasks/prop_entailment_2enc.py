@@ -11,22 +11,22 @@ from sklearn.metrics import accuracy_score, \
 
 class Example(object):
 
-    def __init__(self, seq, lbl):
-        self.seq = seq
-        self.lbl = lbl
+    def __init__(self, seq1, seq2, lbl):
+        self.seq1 = self.tokenizer(seq1)
+        self.seq2 = self.tokenizer(seq2)
+        self.lbl = int(lbl)
 
-def tokenizer(seq):
-    return list(seq)
+    def tokenizer(self, seq):
+        return list(seq)
 
 def load_examples(fname):
     examples = []
 
     with open(fname, 'r') as f:
         for line in f:
-            idx, seq1, seq2, lbl = \
-                line.split('\t')
-            seq = seq1 + SEP + seq2
-            examples.append(Example(seq, lbl))
+            seq1, seq2, lbl, _, _, _ = \
+                line.split(',')
+            examples.append(Example(seq1, seq2, lbl))
 
     return examples
 
@@ -35,29 +35,28 @@ def build_iters(ftrain, fvalid, bsz, device):
     examples_train = load_examples(ftrain)
 
     SEQ = torchtext.data.Field(sequential=True, use_vocab=True,
-                               tokenize=tokenizer,
                                pad_token=PAD,
                                unk_token=UNK,
                                eos_token=None)
-    LBL = torchtext.data.Field(sequential=False, use_vocab=True)
+    LBL = torchtext.data.Field(sequential=False, use_vocab=False)
 
-    train = Dataset(examples_train, fields=[('seq', SEQ),
-                                      ('lbl', LBL)])
+    train = Dataset(examples_train, fields=[('seq1', SEQ),
+                                            ('seq2', SEQ),
+                                            ('lbl', LBL)])
     SEQ.build_vocab(train)
-    LBL.build_vocab(train)
-
     examples_valid = load_examples(fvalid)
-    valid = Dataset(examples_valid, fields=[('seq', SEQ),
-                                      ('lbl', LBL)])
+    valid = Dataset(examples_valid, fields=[('seq1', SEQ),
+                                            ('seq2', SEQ),
+                                            ('lbl', LBL)])
 
     train_iter = torchtext.data.Iterator(train, batch_size=bsz,
                                          sort=False, repeat=False,
-                                         sort_key=lambda x: len(x.seq),
+                                         sort_key=lambda x: len(x.seq1),
                                          sort_within_batch=True,
                                          device=device)
     valid_iter = torchtext.data.Iterator(valid, batch_size=bsz,
                                          sort=False, repeat=False,
-                                         sort_key=lambda x: len(x.seq),
+                                         sort_key=lambda x: len(x.seq1),
                                          sort_within_batch=True,
                                          device=device)
 
@@ -73,8 +72,8 @@ def valid(model, valid_iter):
     with torch.no_grad():
         model.eval()
         for i, batch in enumerate(valid_iter):
-            seq, lbl = batch.seq, batch.lbl
-            res= model(seq)
+            seq1, seq2, lbl = batch.seq1, batch.seq2, batch.lbl
+            res= model(seq1, seq2)
             res_clf = res['res_clf']
 
             pred = res_clf.max(dim=1)[1].cpu().numpy()
@@ -83,9 +82,9 @@ def valid(model, valid_iter):
             true_lst.extend(lbl)
 
     accuracy = accuracy_score(true_lst, pred_lst)
-    precision = precision_score(true_lst, pred_lst, average='macro')
-    recall = recall_score(true_lst, pred_lst, average='macro')
-    f1 = f1_score(true_lst, pred_lst, average='macro')
+    precision = precision_score(true_lst, pred_lst)
+    recall = recall_score(true_lst, pred_lst)
+    f1 = f1_score(true_lst, pred_lst)
 
     return accuracy, precision, recall, f1
 
@@ -96,12 +95,13 @@ def train(model, iters, opt, criterion, optim):
     print(valid(model, valid_iter))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
-            seq, lbl = batch.seq, batch.lbl
+            seq1, seq2, lbl = batch.seq1, batch.seq2, batch.lbl
+
             model.train()
             model.zero_grad()
-            res = model(seq)
+            res = model(seq1, seq2)
             res_clf = res['res_clf']
-            loss = criterion(res_clf.view(-1, 3), lbl)
+            loss = criterion(res_clf.view(-1, 2), lbl)
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()
@@ -131,19 +131,39 @@ class Model(nn.Module):
         self.encoder = encoder
         self.embedding = embedding
         self.hdim = self.encoder.hdim
-        self.clf = nn.Linear(self.hdim, 3)
+        self.clf = nn.Linear(self.hdim * 4, 2)
         self.padding_idx = embedding.padding_idx
 
-    def forward(self, input):
-        embs = self.embedding(input)
-        res = self.encoder(embs)
-        mask = input.data.eq(self.padding_idx)
-        len_total, bsz = input.shape
+    def enc(self, seq):
+        mask = seq.data.eq(self.padding_idx)
+        len_total, bsz = seq.shape
         lens = len_total - mask.sum(dim=0)
+
+        embs = self.embedding(seq)
+        input = {'embs': embs,
+                 'lens': lens}
+        res = self.encoder(input)
         output = res['output']
         reps = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
                          dim=0)
-        res_clf = self.clf(reps)
+        return reps
+
+    def forward(self, seq1, seq2):
+        reps1 = self.enc(seq1)
+        reps2 = self.enc(seq2)
+
+        if type(reps1) == tuple and \
+                type(reps2) == tuple:
+            reps1 = reps1[0]
+            reps2 = reps2[0]
+
+        u1 = reps1
+        u2 = reps2
+        u3 = reps1 * reps2
+        u4 = torch.abs(reps1 - reps2)
+
+        u = torch.cat([u1, u2, u3, u4], dim=-1)
+        res_clf = self.clf(u)
         return {'res_clf':res_clf}
 
 criterion = nn.CrossEntropyLoss()

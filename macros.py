@@ -12,4 +12,5 @@ DATA = 'data/'
 RTE = os.path.join(DATA, 'RTE')
 RES = 'res/'
 PROP_ENTAIL = os.path.join(DATA, 'prop-entail')
+REWRITING = os.path.join(DATA, 'rewriting')
 SCAN = os.path.join(DATA, 'scan')

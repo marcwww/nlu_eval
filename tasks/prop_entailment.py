@@ -12,12 +12,15 @@ from sklearn.metrics import accuracy_score, \
 class Example(object):
 
     def __init__(self, seq1, seq2, lbl):
-        self.seq = self.tokenizer(seq1) + \
-                   [SEP] + self.tokenizer(seq2)
+        self.seq = self.tokenizer1(seq1) + \
+                   [SEP] + self.tokenizer1(seq2)
         self.lbl = int(lbl)
 
-    def tokenizer(self, seq):
+    def tokenizer1(self, seq):
         return list(seq)
+
+    def tokenizer2(self, seq):
+        return ['_' + sym + '_' for sym in seq]
 
 
 def load_examples(fname):
@@ -88,8 +91,8 @@ def valid(model, valid_iter):
     return accuracy, precision, recall, f1
 
 def train(model, iters, opt, criterion, optim):
-    train_iter = iters['train']
-    valid_iter = iters['valid']
+    train_iter = iters['train_iter']
+    valid_iter = iters['valid_iter']
 
     print(valid(model, valid_iter))
     for epoch in range(opt.nepoch):
@@ -129,7 +132,9 @@ class Model(nn.Module):
         self.encoder = encoder
         self.embedding = embedding
         self.hdim = self.encoder.hdim
-        self.clf = nn.Linear(self.hdim, 2)
+        self.clf = nn.Sequential(nn.Linear(self.hdim, self.hdim),
+                                 nn.Sigmoid(),
+                                 nn.Linear(self.hdim, 2))
         self.padding_idx = embedding.padding_idx
 
     def forward(self, seq):
