@@ -7,6 +7,7 @@ from torch.nn.utils import clip_grad_norm
 import numpy as np
 import utils
 import itertools
+from collections import defaultdict
 from sklearn.metrics import accuracy_score, \
     precision_score, recall_score, f1_score
 
@@ -32,6 +33,15 @@ def load_examples(fname):
 
 def alpha_order(ch):
     return ord(ch) - ord('A') + 1
+
+def record_map(src, tar, rewriting_map):
+    src = src.data.cpu().numpy()
+    tar = tar.data.cpu().numpy()
+    for i, ch in enumerate(src):
+        tar_tuple = tuple(tar[i * 3 : i * 3 + 3])
+        rewriting_map[ch].add(tar_tuple)
+
+    return rewriting_map
 
 def build_iters(ftrain, fvalid, bsz, device):
 
@@ -68,41 +78,17 @@ def build_iters(ftrain, fvalid, bsz, device):
                                          sort_within_batch=True,
                                          device=device)
 
-    src_itos = SRC.vocab.itos
-    src_stoi = SRC.vocab.stoi
-    tar_itos = TAR.vocab.itos
-    tar_stoi = TAR.vocab.stoi
+    rewriting_map = defaultdict(set)
+    for batch in train_iter:
+        src = batch.src
+        tar = batch.tar
 
-    rewriting_map = {}
-    for i, ch in enumerate(src_itos):
-        if ch in [PAD, UNK, EOS, SOS]:
-            continue
-        # if i == 39:
-        #     print('aaa')
-
-        num = alpha_order(ch[0])
-        if num > 19:
-            num -= 1
-        if len(ch) > 1:
-            num += 25
-
-        # if num == 25:
-        #     print('aaa')
-
-        candis = set()
-        for combi in range(8):
-            a = int(combi / 4) % 2
-            b = int(combi / 2) % 2
-            c = combi % 2
-
-            A = 'A%d_%d' % (num, a + 1)
-            B = 'B%d_%d' % (num, b + 1)
-            C = 'C%d_%d' % (num, c + 1)
-
-            perms = itertools.permutations([tar_stoi[A], tar_stoi[B], tar_stoi[C]], 3)
-            for candi in perms:
-                candis.add(candi)
-        rewriting_map[i] = candis
+        mask_src = src.data.eq(SRC.vocab.stoi[PAD])
+        mask_tar = tar.data.eq(TAR.vocab.stoi[PAD])
+        lens_src = src.shape[0] - mask_src.sum(dim=0)
+        lens_tar = tar.shape[0] - mask_tar.sum(dim=0)
+        for (l_src, l_tar, b) in zip(lens_src, lens_tar, range(bsz)):
+            record_map(src[:l_src-1, b], tar[1:l_tar-1, b], rewriting_map)
 
     return {'train_iter': train_iter,
             'valid_iter': valid_iter,
@@ -115,8 +101,8 @@ def valid_one(src, pred, tar, rewriting_map, src_itos, tar_itos):
     pred = pred.data.cpu().numpy()
     tar = tar.data.cpu().numpy()
 
-    # if pred[-1] != tar[-1]:
-    #     return 0
+    if pred[-1] != tar[-1]:
+        return 0
 
     src = src[:-1]
     pred = pred[1:-1]
@@ -125,12 +111,12 @@ def valid_one(src, pred, tar, rewriting_map, src_itos, tar_itos):
         pred_tuple = tuple(pred[i * 3: i * 3 + 3])
         tar_tuple = tuple(tar[i * 3: i * 3 + 3])
 
-        if tar_tuple not in rewriting_map[ch]:
-            print(ch)
-            print(src_itos[ch])
-            print(tar_tuple)
-            print(tar_itos[tar_tuple[0]])
-            print(rewriting_map[ch])
+        # if tar_tuple not in rewriting_map[ch]:
+        #     print(ch)
+        #     print(src_itos[ch])
+        #     print(tar_tuple)
+        #     print(tar_itos[tar_tuple[0]])
+        #     print(rewriting_map[ch])
 
         assert tar_tuple in rewriting_map[ch], 'illegal target'
 
@@ -189,6 +175,9 @@ def train(model, iters, opt, criterion, optim):
             utils.progress_bar(i / len(train_iter), loss, epoch)
 
             if (i + 1) % int(1 / 4 * len(train_iter)) == 0:
+
+                if epoch == 3:
+                    print('aaa')
                 # print('\r')
                 accurracy = valid(model, valid_iter, rewriting_map)
                 print('{\'Epoch\':%d, \'Format\':\'a\', \'Metric\':[%.4f]}' %
