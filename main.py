@@ -12,7 +12,8 @@ from tasks import prop_entailment, \
     prop_entailment_2enc, \
     rewriting, \
     rte, \
-    scan
+    scan, \
+    pattern
 
 
 if __name__ == '__main__':
@@ -53,6 +54,11 @@ if __name__ == '__main__':
         build_iters = scan.build_iters
         train = scan.train
         Model = scan.Model
+
+    if opt.task == 'pattern':
+        build_iters = pattern.build_iters
+        train = pattern.train
+        Model = pattern.Model
 
     res_iters = build_iters(ftrain=opt.ftrain,
                 fvalid=opt.fvalid,
@@ -102,27 +108,42 @@ if __name__ == '__main__':
     decoder = None
     if opt.enc_type == 'simp-rnn':
         encoder = nets.EncoderSimpRNN(idim=opt.edim,
-                                      hdim=opt.hdim)
+                                      hdim=opt.hdim,
+                                      dropout=opt.dropout)
 
     if opt.enc_type == 'lstm':
         encoder = nets.EncoderLSTM(idim=opt.edim,
-                                   hdim=opt.hdim)
+                                   hdim=opt.hdim,
+                                   dropout=opt.dropout)
+
+    if opt.enc_type == 'ntm':
+        encoder = nets.EncoderNTM(idim=opt.edim,
+                                  cdim=opt.hdim,
+                                  num_heads=opt.num_heads,
+                                  N=opt.N,
+                                  M=opt.M)
 
     if opt.dec_type == 'simp-rnn':
         decoder = nets.DecoderSimpRNN(idim=opt.edim,
-                                      hdim=opt.hdim)
+                                      hdim=opt.hdim,
+                                      dropout=opt.dropout)
 
     if opt.dec_type == 'lstm':
         decoder = nets.DecoderLSTM(idim=opt.edim,
-                                      hdim=opt.hdim)
+                                   hdim=opt.hdim,
+                                   dropout=opt.dropout)
 
     if opt.dec_type == 'alstm':
         decoder = nets.DecoderALSTM(idim=opt.edim,
-                                      hdim=opt.hdim)
+                                    hdim=opt.hdim,
+                                    dropout=opt.dropout)
 
     model = None
     if TAR is None:
-        model = Model(encoder, embedding).to(device)
+        if embedding is None:
+            model = Model(encoder, opt.odim).to(device)
+        else:
+            model = Model(encoder, embedding).to(device)
         utils.init_model(model)
     else:
         model = Model(encoder, decoder,
@@ -143,6 +164,10 @@ if __name__ == '__main__':
         criterion = nn.CrossEntropyLoss()
     else:
         criterion = nn.CrossEntropyLoss(ignore_index=TAR.vocab.stoi[PAD])
+
+    if opt.task == 'pattern':
+        criterion = nn.BCELoss()
+
     optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()),
                            lr=opt.lr,
                            weight_decay=opt.wdecay)

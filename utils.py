@@ -1,6 +1,25 @@
 import numpy as np
 from torch.nn.init import xavier_uniform_
 import torch
+from torch import nn
+from torch.nn import functional as F
+
+def modulo_convolve(w, s):
+    # w: (N)
+    # s: (3)
+    assert s.size(0) == 3
+    t = torch.cat([w[-1:], w, w[:1]], dim=-1)
+    c = F.conv1d(t.view(1, 1, -1), s.view(1, 1, -1)).view(-1)
+    return c
+
+def split_cols(mat, lengths):
+    """Split a 2D matrix to variable length columns."""
+    assert mat.size()[1] == sum(lengths), "Lengths must be summed to num columns"
+    l = np.cumsum([0] + lengths)
+    results = []
+    for s, e in zip(l[:-1], l[1:]):
+        results += [mat[:, s:e]]
+    return results
 
 def one_hot_matrix(stoi, device, edim):
 
@@ -55,6 +74,28 @@ def seq_lens(seq, padding_idx):
     len_total, bsz = seq.shape
     lens = len_total - mask.sum(dim=0)
     return lens
+
+class Attention(nn.Module):
+    def __init__(self, hdim):
+        super(Attention, self).__init__()
+        self.hc2ha = nn.Sequential(nn.Linear(hdim * 2, hdim, bias=False),
+                                  nn.Tanh())
+
+    def forward(self, h, enc_outputs):
+        # h: (1, bsz, hdim)
+        # h_current: (1, bsz, 1, hdim)
+        h_current = h.unsqueeze(2)
+        # enc_outputs: (len_total, bsz, hdim, 1)
+        enc_outputs = enc_outputs.unsqueeze(-1)
+        # a: (len_total, bsz, 1, 1)
+        a = h_current.matmul(enc_outputs)
+        a = F.softmax(a, dim=0)
+        # c: (len_total, bsz, hdim, 1)
+        c = a * enc_outputs
+        # c: (bsz, hdim)
+        c = c.sum(0).squeeze(-1).unsqueeze(0)
+        ha = self.hc2ha(torch.cat([h, c], dim=-1))
+        return ha
 
 if __name__ == '__main__':
     up, down = shift_matrix(3)

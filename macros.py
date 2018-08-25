@@ -14,3 +14,4 @@ RES = 'res/'
 PROP_ENTAIL = os.path.join(DATA, 'prop-entail')
 REWRITING = os.path.join(DATA, 'rewriting')
 SCAN = os.path.join(DATA, 'scan')
+PATTERN = os.path.join(DATA, 'pattern')
