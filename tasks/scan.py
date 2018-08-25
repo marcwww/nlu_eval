@@ -78,12 +78,15 @@ def valid(model, valid_iter):
         model.eval()
         for i, batch in enumerate(valid_iter):
             src, tar = batch.src, batch.tar
-            max_length, bsz = tar.shape
+
+            # take out <sos>
+            tar = tar[1:]
             res = model(src, tar)
             outputs = res['outputs']
             pred = outputs.max(dim=-1)[1]
 
-            mask = tar.data.eq(model.padding_idx)
+            max_length, bsz = tar.shape
+            mask = tar.data.eq(model.padding_idx_dec)
             lens = max_length - mask.sum(dim=0)
             for (l, b) in zip(lens, range(bsz)):
                 cost = torch.abs(pred[:l, b] - tar[:l, b]).sum().item()
@@ -103,6 +106,9 @@ def train(model, iters, opt, criterion, optim):
             src, tar = batch.src, batch.tar
             model.train()
             model.zero_grad()
+
+            # take out <sos>
+            tar = tar[1:]
             res = model(src, tar)
             outputs = res['outputs']
             dec_voc_size = model.dec_voc_size
@@ -143,7 +149,7 @@ class Model(nn.Module):
         self.hdim = self.encoder.hdim
         self.padding_idx_enc = embedding_enc.padding_idx
         self.padding_idx_dec = embedding_dec.padding_idx
-        self.dec_h0 = nn.Parameter(torch.LongTensor([sos_idx]),
+        self.dec_inp0 = nn.Parameter(torch.LongTensor([sos_idx]),
                                    requires_grad=False)
         self.clf = nn.Linear(self.hdim, self.dec_voc_size)
 
@@ -158,11 +164,18 @@ class Model(nn.Module):
         res = self.encoder(input)
 
         hid = res['hid']
-        inp = self.dec_h0.expand(1, bsz)
+        enc_outputs = res['output']
+
+        inp = self.dec_inp0.expand(1, bsz)
         inp = self.embedding_dec(inp)
+
         outputs = []
         for target in tar:
-            res = self.decoder(inp, hid)
+            input = {'inp': inp,
+                     'hid': hid,
+                     'enc_outputs': enc_outputs}
+
+            res = self.decoder(input)
             output = res['output']
             output = self.clf(output)
             if self.training:

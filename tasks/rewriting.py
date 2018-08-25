@@ -101,16 +101,17 @@ def valid_one(src, pred, tar, rewriting_map, src_itos, tar_itos):
     pred = pred.data.cpu().numpy()
     tar = tar.data.cpu().numpy()
 
-    # if pred[-1] != tar[-1]:
-    #     return 0, len(src[:-1])
+    if pred[-1] != tar[-1]:
+        return 0, len(src[:-1])
 
     nt = 0
     nc = 0
     # print(' '.join([src_itos[i] for i in src]))
 
+    # take out of <eos>
     src = src[:-1]
-    pred = pred[1:-1]
-    tar = tar[1:-1]
+    pred = pred[:-1]
+    tar = tar[:-1]
     for (i, ch) in enumerate(src):
         pred_tuple = tuple(pred[i * 3: i * 3 + 3])
         tar_tuple = tuple(tar[i * 3: i * 3 + 3])
@@ -141,7 +142,9 @@ def valid(model, valid_iter, rewriting_map):
         model.eval()
         for i, batch in enumerate(valid_iter):
             src, tar = batch.src, batch.tar
-            max_length, bsz = tar.shape
+
+            # take out <sos>
+            tar = tar[1:]
             res = model(src, tar)
             outputs = res['outputs']
             pred = outputs.max(dim=-1)[1]
@@ -150,6 +153,7 @@ def valid(model, valid_iter, rewriting_map):
             mask_tar = tar.data.eq(model.padding_idx_dec)
             lens_src = src.shape[0] - mask_src.sum(dim=0)
             lens_tar = tar.shape[0] - mask_tar.sum(dim=0)
+            bsz = src.shape[1]
             for (l_src, l_tar, b) in zip(lens_src, lens_tar, range(bsz)):
                 nc_one, nt_one = valid_one(src[:l_src, b],
                                  pred[:l_tar, b],
@@ -165,12 +169,15 @@ def train(model, iters, opt, criterion, optim):
     valid_iter = iters['valid_iter']
     rewriting_map = iters['rewriting_map']
 
-    print(valid(model, valid_iter, rewriting_map))
+    # print(valid(model, valid_iter, rewriting_map))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             src, tar = batch.src, batch.tar
             model.train()
             model.zero_grad()
+
+            # take out <sos>
+            tar = tar[1:]
             res = model(src, tar)
             outputs = res['outputs']
             dec_voc_size = model.dec_voc_size
@@ -229,11 +236,17 @@ class Model(nn.Module):
         res = self.encoder(input)
 
         hid = res['hid']
+        enc_outputs = res['output']
+
         inp = self.dec_h0.expand(1, bsz)
         inp = self.embedding_dec(inp)
         outputs = []
         for target in tar:
-            res = self.decoder(inp, hid)
+            input = {'inp': inp,
+                     'hid': hid,
+                     'enc_outputs': enc_outputs}
+
+            res = self.decoder(input)
             output = res['output']
             output = self.clf(output)
             if self.training:

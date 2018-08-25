@@ -266,17 +266,71 @@ class DecoderLSTM(nn.Module):
         self.c0 = nn.Parameter(torch.zeros(hdim),
                                requires_grad=False)
 
-    def forward(self, input, hid):
-        bsz = input.shape[1]
+    def forward(self, input):
+        inp = input['inp']
+        hid = input['hid']
+
+        bsz = inp.shape[1]
         if type(hid) != tuple:
             c0 = self.c0.expand(1, bsz, self.hdim).\
                 contiguous()
             hid = (hid, c0)
 
-        output, hid = self.rnn(input, hid)
+        output, hid = self.rnn(inp, hid)
         return {'output': output,
                 'hid': hid}
 
+class Attention(nn.Module):
+    def __init__(self, hdim):
+        super(Attention, self).__init__()
+        self.hc2ha = nn.Sequential(nn.Linear(hdim * 2, hdim, bias=False),
+                                  nn.Tanh())
+
+    def forward(self, h, enc_outputs):
+        # h: (1, bsz, hdim)
+        # h_current: (1, bsz, 1, hdim)
+        h_current = h.unsqueeze(2)
+        # enc_outputs: (len_total, bsz, hdim, 1)
+        enc_outputs = enc_outputs.unsqueeze(-1)
+        # a: (len_total, bsz, 1, 1)
+        a = h_current.matmul(enc_outputs)
+        a = F.softmax(a, dim=0)
+        # c: (len_total, bsz, hdim, 1)
+        c = a * enc_outputs
+        # c: (bsz, hdim)
+        c = c.sum(0).squeeze(-1).unsqueeze(0)
+        ha = self.hc2ha(torch.cat([h, c], dim=-1))
+        return ha
+
+# LSTM with attention
+class DecoderALSTM(nn.Module):
+    def __init__(self, idim, hdim):
+        super(DecoderALSTM, self).__init__()
+        self.idim = idim
+        self.hdim = hdim
+        self.rnn = nn.LSTM(input_size=idim,
+                          hidden_size=hdim)
+        self.c0 = nn.Parameter(torch.zeros(hdim),
+                               requires_grad=False)
+        self.atten = Attention(hdim)
+
+    def forward(self, input):
+        inp = input['inp']
+        hid = input['hid']
+        enc_outputs = input['enc_outputs']
+
+        bsz = inp.shape[1]
+        if type(hid) != tuple:
+            c0 = self.c0.expand(1, bsz, self.hdim).\
+                contiguous()
+            hid = (hid, c0)
+
+        ha = self.atten(hid[0], enc_outputs)
+        hid = (ha, hid[1])
+
+        output, hid = self.rnn(inp, hid)
+        return {'output': output,
+                'hid': hid}
 
 
 

@@ -4,10 +4,10 @@ from macros import *
 
 def model_opts(parser):
     group = parser.add_argument_group('model')
-    # group.add_argument('-edim', type=int, default=256)
-    # group.add_argument('-hdim', type=int, default=256)
-    group.add_argument('-edim', type=int, default=32)
-    group.add_argument('-hdim', type=int, default=32)
+    group.add_argument('-edim', type=int, default=256)
+    group.add_argument('-hdim', type=int, default=256)
+    # group.add_argument('-edim', type=int, default=32)
+    # group.add_argument('-hdim', type=int, default=32)
     group.add_argument('-sdim', type=int, default=50)
     group.add_argument('-stack_size', type=int, default=100)
     group.add_argument('-stack_depth', type=int, default=2)
@@ -16,14 +16,16 @@ def model_opts(parser):
     group.add_argument('-enc_type', type=str, default='lstm')
     # group.add_argument('-enc_type', type=str, default='simp-rnn')
     # group.add_argument('-dec_type', type=str, default='simp-rnn')
-    group.add_argument('-dec_type', type=str, default='lstm')
+    # group.add_argument('-dec_type', type=str, default='lstm')
+    group.add_argument('-dec_type', type=str, default='alstm')
 
 def train_opts(parser):
     group = parser.add_argument_group('train')
     # group.add_argument('-ftrain', type=str, default=os.path.join(SCAN, 'tasks_train_simple.txt'))
     # group.add_argument('-fvalid', type=str, default=os.path.join(SCAN, 'tasks_test_simple.txt'))
     group.add_argument('-ftrain', type=str, default=os.path.join(REWRITING, 'grammar_std.train.full.tsv'))
-    group.add_argument('-fvalid', type=str, default=os.path.join(REWRITING, 'grammar_std.tst.full.tsv'))
+    group.add_argument('-fvalid', type=str, default=os.path.join(REWRITING, 'grammar.val.tsv'))
+    # group.add_argument('-fvalid', type=str, default=os.path.join(REWRITING, 'grammar_std.tst.full.tsv'))
     # group.add_argument('-ftrain', type=str, default=os.path.join(PROP_ENTAIL, 'train.txt'))
     # group.add_argument('-fvalid', type=str, default=os.path.join(PROP_ENTAIL, 'validate.txt'))
     # group.add_argument('-ftrain', type=str, default=os.path.join(RTE, 'train.tsv'))

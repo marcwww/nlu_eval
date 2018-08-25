@@ -116,6 +116,10 @@ if __name__ == '__main__':
         decoder = nets.DecoderLSTM(idim=opt.edim,
                                       hdim=opt.hdim)
 
+    if opt.dec_type == 'alstm':
+        decoder = nets.DecoderALSTM(idim=opt.edim,
+                                      hdim=opt.hdim)
+
     model = None
     if TAR is None:
         model = Model(encoder, embedding).to(device)
