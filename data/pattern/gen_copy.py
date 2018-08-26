@@ -26,16 +26,20 @@ def gen(num_batches,
     return res
 
 if __name__ == '__main__':
+    bsz = 2
+    num_batches = 50000
+    seq_width = 8
+
     # for training
-    res = gen(3125, 32, 8, 1, 5)
+    res = gen(num_batches, bsz, seq_width, 1, 5)
     torch.save(res, 'copy_train1-5.pkl')
     # res = torch.load('train1-5.pkl')
 
     # for validation
-    res = gen(100, 32, 8, 1, 5)
+    res = gen(num_batches / 50, bsz, seq_width, 1, 5)
     torch.save(res, 'copy_valid1-5.pkl')
     # res = torch.load('valid1-5.pkl')
 
-    res = gen(100, 32, 8, 6, 10)
+    res = gen(num_batches / 50, bsz, seq_width, 6, 10)
     torch.save(res, 'copy_valid6-10.pkl')
     # res = torch.load('valid6-10.pkl')

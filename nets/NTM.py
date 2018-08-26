@@ -136,7 +136,6 @@ class NTMWriteHead(nn.Module):
         self.memory.write(w, e, a)
         return w
 
-
 class EncoderNTM(nn.Module):
     def __init__(self,
                  idim,
