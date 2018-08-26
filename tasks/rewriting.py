@@ -43,7 +43,12 @@ def record_map(src, tar, rewriting_map):
 
     return rewriting_map
 
-def build_iters(ftrain, fvalid, bsz, device):
+def build_iters(param_iter):
+
+    ftrain = param_iter['ftrain']
+    fvalid = param_iter['fvalid']
+    bsz = param_iter['bsz']
+    device = param_iter['device']
 
     examples_train = load_examples(ftrain)
 

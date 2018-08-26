@@ -26,6 +26,8 @@ if __name__ == '__main__':
     opts.train_opts(parser)
     opt = parser.parse_args()
 
+    utils.init_seed(opt.seed)
+
     build_iters = None
     train = None
     Model = None
@@ -60,10 +62,20 @@ if __name__ == '__main__':
         train = pattern.train
         Model = pattern.Model
 
-    res_iters = build_iters(ftrain=opt.ftrain,
-                fvalid=opt.fvalid,
-                bsz=opt.bsz,
-                device=opt.gpu)
+    param_iter = {'ftrain': opt.ftrain,
+                  'fvalid': opt.fvalid,
+                  'bsz': opt.bsz,
+                  'device': opt.gpu,
+                  'sub_task': opt.sub_task,
+                  'num_batches_train': opt.num_batches_train,
+                  'num_batches_valid': opt.num_batches_valid,
+                  'min_len_train': opt.min_len_train,
+                  'min_len_valid': opt.min_len_valid,
+                  'max_len_train': opt.max_len_train,
+                  'max_len_valid': opt.max_len_valid,
+                  'seq_width': opt.seq_width}
+
+    res_iters = build_iters(param_iter)
 
     embedding = None
     embedding_enc = None
@@ -122,6 +134,13 @@ if __name__ == '__main__':
                                   num_heads=opt.num_heads,
                                   N=opt.N,
                                   M=opt.M)
+    if opt.enc_type == 'dnc':
+        encoder = nets.EncoderDNC(idim=opt.edim,
+                                  cdim=opt.hdim,
+                                  num_heads=opt.num_heads,
+                                  N=opt.N,
+                                  M=opt.M,
+                                  gpu=opt.gpu)
 
     if opt.dec_type == 'simp-rnn':
         decoder = nets.DecoderSimpRNN(idim=opt.edim,
@@ -149,7 +168,7 @@ if __name__ == '__main__':
         model = Model(encoder, decoder,
                       embedding_enc, embedding_dec,
                       TAR.vocab.stoi[SOS]).to(device)
-        utils.init_model(model)
+        # utils.init_model(model)
 
     if opt.load_idx != -1:
         basename = "{}-epoch-{}".format(opt.task, opt.load_idx)

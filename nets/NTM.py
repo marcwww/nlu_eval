@@ -15,6 +15,8 @@ class NTMMemory(nn.Module):
         self.M = M
         self.mem_bias = nn.Parameter(torch.Tensor(N, M),
                                      requires_grad=False)
+        stdev = 1 / (np.sqrt(N + M))
+        nn.init.uniform(self.mem_bias, -stdev, stdev)
 
     def reset(self, bsz):
         self.bsz = bsz
@@ -156,6 +158,8 @@ class EncoderNTM(nn.Module):
         self.memory = NTMMemory(N, M)
         self.controller = nn.LSTM(idim + M * num_heads, cdim)
 
+        self._reset_controller()
+
         self.heads = nn.ModuleList([])
         for _ in range(num_heads):
             self.heads += [
@@ -170,6 +174,14 @@ class EncoderNTM(nn.Module):
 
         for i, r in enumerate(self.r0):
             setattr(self, 'r0_%d' % i, r)
+
+    def _reset_controller(self):
+        for p in self.controller.parameters():
+            if p.dim() == 1:
+                nn.init.constant(p, 0)
+            else:
+                stdev = 5 / (np.sqrt(self.idim + self.M * self.num_heads + self.cdim))
+                nn.init.uniform(p, -stdev, stdev)
 
     def forward(self, input):
         embs = input['embs']
@@ -186,14 +198,14 @@ class EncoderNTM(nn.Module):
         hs = []
         cs = []
         for emb in embs:
+
             controller_inp = torch.cat([emb] + reads, dim=1).unsqueeze(0)
             controller_outp, (h, c) = self.controller(controller_inp, (h, c))
             controller_outp = controller_outp.squeeze(0)
 
-            # order??
+            # # order??
             hs.append(h)
             cs.append(c)
-
 
             reads = []
             head_states_next = []
@@ -203,8 +215,8 @@ class EncoderNTM(nn.Module):
                     reads += [r]
                 else:
                     head_state = head(controller_outp, head_state)
-
                 head_states_next += [head_state]
+            head_states = head_states_next
 
             o = torch.cat([controller_outp] + reads, dim=1)
             os.append(o.unsqueeze(0))

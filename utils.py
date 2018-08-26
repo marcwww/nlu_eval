@@ -3,6 +3,12 @@ from torch.nn.init import xavier_uniform_
 import torch
 from torch import nn
 from torch.nn import functional as F
+import logging
+import random
+import time
+
+LOGGER = logging.getLogger(__name__)
+
 
 def modulo_convolve(w, s):
     # w: (N)
@@ -96,6 +102,20 @@ class Attention(nn.Module):
         c = c.sum(0).squeeze(-1).unsqueeze(0)
         ha = self.hc2ha(torch.cat([h, c], dim=-1))
         return ha
+
+def get_ms():
+    """Returns the current time in miliseconds."""
+    return time.time() * 1000
+
+def init_seed(seed=None):
+    """Seed the RNGs for predicatability/reproduction purposes."""
+    if seed is None:
+        seed = int(get_ms() // 1000)
+
+    LOGGER.info("Using seed=%d", seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)
 
 if __name__ == '__main__':
     up, down = shift_matrix(3)
