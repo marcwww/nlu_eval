@@ -151,7 +151,5 @@ class Model(nn.Module):
         res_clf = self.clf(reps)
         return {'res_clf':res_clf}
 
-criterion = nn.CrossEntropyLoss()
-
 
 

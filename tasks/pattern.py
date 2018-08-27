@@ -178,7 +178,5 @@ class Model(nn.Module):
 
         return {'res_clf':out}
 
-criterion = nn.BCELoss()
-
 
 

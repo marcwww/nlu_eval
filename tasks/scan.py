@@ -169,6 +169,9 @@ class Model(nn.Module):
 
         hid = res['hid']
         enc_outputs = res['output']
+        ntm_states = None
+        if 'ntm_states' in res.keys():
+            ntm_states = res['ntm_states']
 
         inp = self.dec_inp0.expand(1, bsz)
         inp = self.embedding_dec(inp)
@@ -177,7 +180,8 @@ class Model(nn.Module):
         for target in tar:
             input = {'inp': inp,
                      'hid': hid,
-                     'enc_outputs': enc_outputs}
+                     'enc_outputs': enc_outputs,
+                     'ntm_states': ntm_states}
 
             res = self.decoder(input)
             output = res['output']
@@ -188,12 +192,14 @@ class Model(nn.Module):
                 pred_idx = output.max(dim=-1)[1]
                 inp = self.embedding_dec(pred_idx)
             hid = res['hid']
+            if 'ntm_states' in res.keys():
+                ntm_states = res['ntm_states']
+            else:
+                ntm_states = None
             outputs.append(output)
 
         outputs = torch.cat(outputs, dim=0)
         return {'outputs':outputs}
-
-criterion = nn.CrossEntropyLoss()
 
 
 

@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a291fde1-2c0c-4e99-ae38-d59ebaaa4773" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/nets/DNC.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/pattern/gen_copy.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/pattern/gen_copy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nets/NTM.py" beforeDir="false" afterPath="$PROJECT_DIR$/nets/NTM.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nets/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/nets/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/opts.py" beforeDir="false" afterPath="$PROJECT_DIR$/opts.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tasks/pattern.py" beforeDir="false" afterPath="$PROJECT_DIR$/tasks/pattern.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tasks/prop_entailment.py" beforeDir="false" afterPath="$PROJECT_DIR$/tasks/prop_entailment.py" afterDir="false" />
@@ -15,7 +11,6 @@
       <change beforePath="$PROJECT_DIR$/tasks/rewriting.py" beforeDir="false" afterPath="$PROJECT_DIR$/tasks/rewriting.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tasks/rte.py" beforeDir="false" afterPath="$PROJECT_DIR$/tasks/rte.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tasks/scan.py" beforeDir="false" afterPath="$PROJECT_DIR$/tasks/scan.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -24,11 +19,36 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/nlu_eval$gpu.coverage" NAME="gpu_2 Coverage Results" MODIFIED="1535286986773" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/nlu_eval$gpu.coverage" NAME="gpu_2 Coverage Results" MODIFIED="1535338338793" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/nlu_eval$gen_copy.coverage" NAME="gen_copy Coverage Results" MODIFIED="1535270714500" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data/pattern" />
     <SUITE FILE_PATH="coverage/nlu_eval$main.coverage" NAME="cpu Coverage Results" MODIFIED="1535259980060" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/nlu_eval$gpu_3.coverage" NAME="gpu_3 Coverage Results" MODIFIED="1535271104600" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/nlu_eval$cpu.coverage" NAME="cpu Coverage Results" MODIFIED="1535298193562" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/nlu_eval$gpu_3.coverage" NAME="gpu_3 Coverage Results" MODIFIED="1535335727629" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/nlu_eval$cpu.coverage" NAME="cpu Coverage Results" MODIFIED="1535339180408" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+  <component name="DockManager">
+    <window id="1">
+      <content type="file-editors">
+        <state>
+          <leaf>
+            <file pinned="false" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/nets/LSTM.py">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state relative-caret-position="664">
+                    <caret line="87" lean-forward="true" selection-start-line="87" selection-end-line="87" />
+                    <folding>
+                      <element signature="e#0#18#0" expanded="true" />
+                      <element signature="e#256#1545#0" />
+                      <element signature="e#1404#1481#0" />
+                      <element signature="e#1499#1545#0" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </state>
+      </content>
+    </window>
   </component>
   <component name="FUSProjectUsageTrigger">
     <session id="-666877811">
@@ -44,20 +64,20 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="3" />
-          <entry key="py" value="31405" />
+          <entry key="py" value="32703" />
           <entry key="tsv" value="231" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="234" />
-          <entry key="Python" value="31405" />
+          <entry key="Python" value="32703" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="gitignore" value="1" />
-          <entry key="py" value="114" />
+          <entry key="py" value="125" />
           <entry key="pyi" value="1" />
           <entry key="tsv" value="10" />
           <entry key="txt" value="8" />
@@ -66,7 +86,7 @@
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="19" />
-          <entry key="Python" value="113" />
+          <entry key="Python" value="124" />
           <entry key="PythonStub" value="1" />
           <entry key="UML" value="1" />
         </counts>
@@ -75,70 +95,32 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/nets/NTM.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="229">
-              <caret line="217" column="48" selection-start-line="217" selection-start-column="48" selection-end-line="217" selection-end-column="48" />
+            <state relative-caret-position="256">
+              <caret line="52" column="36" selection-start-line="52" selection-start-column="36" selection-end-line="52" selection-end-column="36" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
-                <marker date="1535298416431" expanded="true" signature="1469:1470" ph="..." />
-                <marker date="1535298416431" expanded="true" signature="1891:2087" ph="..." />
-                <marker date="1535298416431" expanded="true" signature="3243:4088" ph="..." />
-                <marker date="1535298416431" expanded="true" signature="5211:5521" ph="..." />
-                <marker date="1535298416431" expanded="true" signature="5245:5521" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tasks/pattern.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="223">
-              <caret line="112" column="28" selection-start-line="112" selection-start-column="28" selection-end-line="112" selection-end-column="28" />
-              <folding>
-                <element signature="e#0#16#0" expanded="true" />
-                <marker date="1535296298418" expanded="true" signature="897:899" ph="..." />
-                <marker date="1535296298418" expanded="true" signature="918:1774" ph="..." />
-                <marker date="1535296298418" expanded="true" signature="1456:1489" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/nets/SARNN.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="8" selection-start-line="8" selection-end-line="8" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-                <element signature="e#256#6406#0" />
-                <element signature="e#401#2200#0" />
-                <element signature="e#1312#1392#0" />
-                <element signature="e#2320#2978#0" />
-                <element signature="e#2320#2345#0" />
-                <element signature="e#3054#3453#0" />
-                <element signature="e#3495#6406#0" />
-                <element signature="e#3714#3732#0" />
-                <element signature="e#4145#6052#0" />
-                <element signature="e#4145#4184#0" />
-                <element signature="e#4628#4647#0" />
-                <element signature="e#5132#5175#0" />
-                <element signature="e#6268#6406#0" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="211">
-              <caret line="171" lean-forward="true" selection-start-line="171" selection-end-line="171" />
-              <folding>
-                <element signature="e#0#14#0" expanded="true" />
+                <element signature="e#289#501#0" />
+                <element signature="e#511#589#0" />
+                <element signature="e#619#640#0" />
+                <element signature="e#673#732#0" />
+                <element signature="e#772#975#0" />
+                <element signature="e#1299#1331#0" />
+                <element signature="e#1633#1753#0" />
+                <element signature="e#2374#2721#0" />
+                <element signature="e#2768#2810#0" />
+                <element signature="e#3200#3557#0" />
+                <element signature="e#3604#3646#0" />
+                <element signature="e#3684#3696#0" />
+                <element signature="e#3741#3995#0" />
+                <marker date="1535339179271" expanded="true" signature="1481:1482" ph="..." />
+                <marker date="1535339179271" expanded="true" signature="1903:2099" ph="..." />
+                <marker date="1535339179271" expanded="true" signature="5578:5882" ph="..." />
+                <marker date="1535339179271" expanded="true" signature="5611:5882" ph="..." />
+                <marker date="1535339179271" expanded="true" signature="9164:9250" ph="..." />
+                <marker date="1535339179271" expanded="true" signature="9275:9284" ph="..." />
               </folding>
             </state>
           </provider>
@@ -147,8 +129,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="207">
-              <caret line="59" column="4" selection-start-line="59" selection-start-column="4" selection-end-line="59" selection-end-column="4" />
+            <state relative-caret-position="263">
+              <caret line="18" column="12" lean-forward="true" selection-start-line="18" selection-start-column="12" selection-end-line="18" selection-end-column="12" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -157,13 +139,65 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/opts.py">
+        <entry file="file://$PROJECT_DIR$/nets/DNC.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="303">
-              <caret line="73" column="61" lean-forward="true" selection-start-line="73" selection-start-column="61" selection-end-line="73" selection-end-column="61" />
+            <state relative-caret-position="185">
+              <caret line="36" column="8" selection-start-line="36" selection-start-column="8" selection-end-line="36" selection-end-column="8" />
               <folding>
-                <element signature="e#0#15#0" expanded="true" />
-                <marker date="1535296242052" expanded="true" signature="1800:1805" ph="..." />
+                <element signature="e#0#18#0" expanded="true" />
+                <marker date="1535267701942" expanded="true" signature="271:272" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tasks/scan.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="215">
+              <caret line="197" column="33" lean-forward="true" selection-start-line="194" selection-start-column="12" selection-end-line="197" selection-end-column="33" />
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tasks/rewriting.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="200">
+              <caret line="268" column="17" lean-forward="true" selection-start-line="268" selection-start-column="17" selection-end-line="268" selection-end-column="17" />
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+                <marker date="1535338807643" expanded="true" signature="851:1069" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tasks/prop_entailment.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="299">
+              <caret line="157" column="34" selection-start-line="157" selection-start-column="34" selection-end-line="157" selection-end-column="34" />
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tasks/pattern.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="544">
+              <caret line="178" column="30" selection-start-line="178" selection-start-column="30" selection-end-line="178" selection-end-column="30" />
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+                <marker date="1535336221744" expanded="true" signature="897:899" ph="..." />
+                <marker date="1535336221744" expanded="true" signature="918:1774" ph="..." />
+                <marker date="1535336221744" expanded="true" signature="1456:1489" ph="..." />
               </folding>
             </state>
           </provider>
@@ -173,7 +207,32 @@
         <entry file="file://$USER_HOME$/.pyenv/versions/atec36/lib/python3.6/site-packages/torch/nn/modules/module.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="122">
-              <caret line="518" selection-start-line="518" selection-end-line="518" />
+              <caret line="490" selection-start-line="490" selection-end-line="490" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/main.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="253">
+              <caret line="115" column="78" selection-start-line="115" selection-start-column="78" selection-end-line="115" selection-end-column="78" />
+              <folding>
+                <element signature="e#0#14#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/opts.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="90">
+              <caret line="6" column="53" selection-start-line="6" selection-start-column="53" selection-end-line="6" selection-end-column="53" />
+              <folding>
+                <element signature="e#0#15#0" expanded="true" />
+                <marker date="1535339373901" expanded="true" signature="1865:1870" ph="..." />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -225,16 +284,16 @@
         <option value="$PROJECT_DIR$/nets/__init__.py" />
         <option value="$PROJECT_DIR$/nets/DNC.py" />
         <option value="$PROJECT_DIR$/data/pattern/gen_copy.py" />
-        <option value="$PROJECT_DIR$/tasks/scan.py" />
+        <option value="$PROJECT_DIR$/utils.py" />
         <option value="$PROJECT_DIR$/tasks/rte.py" />
-        <option value="$PROJECT_DIR$/tasks/rewriting.py" />
         <option value="$PROJECT_DIR$/tasks/prop_entailment_2enc.py" />
         <option value="$PROJECT_DIR$/tasks/prop_entailment.py" />
-        <option value="$PROJECT_DIR$/opts.py" />
         <option value="$PROJECT_DIR$/tasks/pattern.py" />
-        <option value="$PROJECT_DIR$/utils.py" />
+        <option value="$PROJECT_DIR$/tasks/scan.py" />
         <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/tasks/rewriting.py" />
         <option value="$PROJECT_DIR$/nets/NTM.py" />
+        <option value="$PROJECT_DIR$/opts.py" />
       </list>
     </option>
   </component>
@@ -262,17 +321,6 @@
             <path>
               <item name="nlu_eval" type="b2602c69:ProjectViewProjectNode" />
               <item name="nlu_eval" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="nlu_eval" type="b2602c69:ProjectViewProjectNode" />
-              <item name="nlu_eval" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="nlu_eval" type="b2602c69:ProjectViewProjectNode" />
-              <item name="nlu_eval" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="pattern" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="nlu_eval" type="b2602c69:ProjectViewProjectNode" />
@@ -330,7 +378,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-      <option name="PARAMETERS" value="-bsz 2 -load_idx -1 -gpu -1 -emb_type dense" />
+      <option name="PARAMETERS" value="-bsz 32 -load_idx -1 -gpu -1 -emb_type one-hot" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -374,7 +422,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-      <option name="PARAMETERS" value="-bsz 64 -load_idx -1 -gpu 2 -emb_type dense" />
+      <option name="PARAMETERS" value="-bsz 32 -load_idx -1 -gpu 2 -emb_type dense" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -438,15 +486,15 @@
       <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.25107297" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Database Changes" order="0" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="1" weight="0.39247313" />
+      <window_info anchor="bottom" id="Terminal" order="1" weight="0.32795697" />
       <window_info anchor="bottom" id="Event Log" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="3" weight="0.32953367" />
       <window_info anchor="bottom" id="Python Console" order="4" weight="0.3293011" />
       <window_info anchor="bottom" id="Docker" order="5" show_stripe_button="false" />
       <window_info anchor="bottom" id="Message" order="6" />
       <window_info anchor="bottom" id="Find" order="7" weight="0.3293011" />
-      <window_info active="true" anchor="bottom" id="Run" order="8" visible="true" weight="0.3293011" />
-      <window_info anchor="bottom" id="Debug" order="9" weight="0.24059139" />
+      <window_info active="true" anchor="bottom" id="Run" order="8" visible="true" weight="0.36155915" />
+      <window_info anchor="bottom" id="Debug" order="9" weight="0.4502688" />
       <window_info anchor="bottom" id="Cvs" order="10" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="11" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="12" />
@@ -707,25 +755,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/nets/LSTM.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-38">
-          <caret line="6" column="16" selection-start-line="6" selection-start-column="16" selection-end-line="6" selection-end-column="16" />
-          <folding>
-            <element signature="e#256#1545#0" />
-            <element signature="e#1404#1481#0" />
-            <element signature="e#1499#1545#0" />
-            <element signature="e#1585#2312#0" />
-            <element signature="e#1634#1954#0" />
-            <element signature="e#1994#2312#0" />
-            <element signature="e#2111#2208#0" />
-            <element signature="e#2266#2312#0" />
-            <element signature="e#2956#3053#0" />
-            <element signature="e#3184#3230#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Library/Caches/PyCharm2018.2/remote_sources/-786991715/315780697/torch/nn/modules/rnn.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="159">
@@ -774,76 +803,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/nets/DNC.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="259">
-          <caret line="23" column="21" selection-start-line="23" selection-start-column="21" selection-end-line="23" selection-end-column="21" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-            <marker date="1535267701942" expanded="true" signature="271:272" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tasks/rte.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="352">
-          <caret line="33" lean-forward="true" selection-start-line="33" selection-end-line="33" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tasks/prop_entailment_2enc.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="36" column="27" lean-forward="true" selection-start-line="36" selection-start-column="27" selection-end-line="36" selection-end-column="27" />
-          <folding>
-            <marker date="1535277400269" expanded="true" signature="2428:2429" ph="..." />
-            <marker date="1535277400269" expanded="true" signature="4817:5248" ph="..." />
-            <marker date="1535277400269" expanded="true" signature="5278:5283" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tasks/scan.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="287">
-          <caret line="33" column="28" lean-forward="true" selection-start-line="33" selection-start-column="28" selection-end-line="33" selection-end-column="28" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data/pattern/gen_copy.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
           <caret line="24" lean-forward="true" selection-start-line="24" selection-end-line="24" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tasks/rewriting.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="291">
-          <caret line="49" column="27" lean-forward="true" selection-start-line="49" selection-start-column="27" selection-end-line="49" selection-end-column="27" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-            <marker date="1535277395665" expanded="true" signature="851:1069" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tasks/prop_entailment.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1532">
-          <caret line="40" column="27" lean-forward="true" selection-start-line="40" selection-start-column="27" selection-end-line="40" selection-end-column="27" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -871,68 +836,159 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/.pyenv/versions/atec36/lib/python3.6/site-packages/torch/nn/modules/module.py">
+    <entry file="file://$PROJECT_DIR$/tasks/rte.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="122">
-          <caret line="518" selection-start-line="518" selection-end-line="518" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="207">
-          <caret line="59" column="4" selection-start-line="59" selection-start-column="4" selection-end-line="59" selection-end-column="4" />
+        <state relative-caret-position="299">
+          <caret line="151" column="34" selection-start-line="151" selection-start-column="34" selection-end-line="151" selection-end-column="34" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#16#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
+    <entry file="file://$PROJECT_DIR$/tasks/prop_entailment_2enc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="211">
-          <caret line="171" lean-forward="true" selection-start-line="171" selection-end-line="171" />
+        <state relative-caret-position="299">
+          <caret line="171" column="34" selection-start-line="171" selection-start-column="34" selection-end-line="171" selection-end-column="34" />
           <folding>
-            <element signature="e#0#14#0" expanded="true" />
+            <marker date="1535336213942" expanded="true" signature="2428:2429" ph="..." />
+            <marker date="1535336213942" expanded="true" signature="4817:5248" ph="..." />
+            <marker date="1535336213942" expanded="true" signature="5278:5283" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/opts.py">
+    <entry file="file://$PROJECT_DIR$/tasks/prop_entailment.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="303">
-          <caret line="73" column="61" lean-forward="true" selection-start-line="73" selection-start-column="61" selection-end-line="73" selection-end-column="61" />
+        <state relative-caret-position="299">
+          <caret line="157" column="34" selection-start-line="157" selection-start-column="34" selection-end-line="157" selection-end-column="34" />
           <folding>
-            <element signature="e#0#15#0" expanded="true" />
-            <marker date="1535296242052" expanded="true" signature="1800:1805" ph="..." />
+            <element signature="e#0#16#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tasks/pattern.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="223">
-          <caret line="112" column="28" selection-start-line="112" selection-start-column="28" selection-end-line="112" selection-end-column="28" />
+        <state relative-caret-position="544">
+          <caret line="178" column="30" selection-start-line="178" selection-start-column="30" selection-end-line="178" selection-end-column="30" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
-            <marker date="1535296298418" expanded="true" signature="897:899" ph="..." />
-            <marker date="1535296298418" expanded="true" signature="918:1774" ph="..." />
-            <marker date="1535296298418" expanded="true" signature="1456:1489" ph="..." />
+            <marker date="1535336221744" expanded="true" signature="897:899" ph="..." />
+            <marker date="1535336221744" expanded="true" signature="918:1774" ph="..." />
+            <marker date="1535336221744" expanded="true" signature="1456:1489" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/nets/LSTM.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="664">
+          <caret line="87" lean-forward="true" selection-start-line="87" selection-end-line="87" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#256#1545#0" />
+            <element signature="e#1404#1481#0" />
+            <element signature="e#1499#1545#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.pyenv/versions/atec36/lib/python3.6/site-packages/torch/nn/modules/module.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="122">
+          <caret line="490" selection-start-line="490" selection-end-line="490" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/nets/DNC.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="36" column="8" selection-start-line="36" selection-start-column="8" selection-end-line="36" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+            <marker date="1535267701942" expanded="true" signature="271:272" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="253">
+          <caret line="115" column="78" selection-start-line="115" selection-start-column="78" selection-end-line="115" selection-end-column="78" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tasks/scan.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="215">
+          <caret line="197" column="33" lean-forward="true" selection-start-line="194" selection-start-column="12" selection-end-line="197" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tasks/rewriting.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="200">
+          <caret line="268" column="17" lean-forward="true" selection-start-line="268" selection-start-column="17" selection-end-line="268" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+            <marker date="1535338807643" expanded="true" signature="851:1069" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/nets/NTM.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="229">
-          <caret line="217" column="48" selection-start-line="217" selection-start-column="48" selection-end-line="217" selection-end-column="48" />
+        <state relative-caret-position="256">
+          <caret line="52" column="36" selection-start-line="52" selection-start-column="36" selection-end-line="52" selection-end-column="36" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
-            <marker date="1535298416431" expanded="true" signature="1469:1470" ph="..." />
-            <marker date="1535298416431" expanded="true" signature="1891:2087" ph="..." />
-            <marker date="1535298416431" expanded="true" signature="3243:4088" ph="..." />
-            <marker date="1535298416431" expanded="true" signature="5211:5521" ph="..." />
-            <marker date="1535298416431" expanded="true" signature="5245:5521" ph="..." />
+            <element signature="e#289#501#0" />
+            <element signature="e#511#589#0" />
+            <element signature="e#619#640#0" />
+            <element signature="e#673#732#0" />
+            <element signature="e#772#975#0" />
+            <element signature="e#1299#1331#0" />
+            <element signature="e#1633#1753#0" />
+            <element signature="e#2374#2721#0" />
+            <element signature="e#2768#2810#0" />
+            <element signature="e#3200#3557#0" />
+            <element signature="e#3604#3646#0" />
+            <element signature="e#3684#3696#0" />
+            <element signature="e#3741#3995#0" />
+            <marker date="1535339179271" expanded="true" signature="1481:1482" ph="..." />
+            <marker date="1535339179271" expanded="true" signature="1903:2099" ph="..." />
+            <marker date="1535339179271" expanded="true" signature="5578:5882" ph="..." />
+            <marker date="1535339179271" expanded="true" signature="5611:5882" ph="..." />
+            <marker date="1535339179271" expanded="true" signature="9164:9250" ph="..." />
+            <marker date="1535339179271" expanded="true" signature="9275:9284" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="263">
+          <caret line="18" column="12" lean-forward="true" selection-start-line="18" selection-start-column="12" selection-end-line="18" selection-end-column="12" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/opts.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" column="53" selection-start-line="6" selection-start-column="53" selection-end-line="6" selection-end-column="53" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+            <marker date="1535339373901" expanded="true" signature="1865:1870" ph="..." />
           </folding>
         </state>
       </provider>

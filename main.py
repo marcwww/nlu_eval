@@ -157,6 +157,13 @@ if __name__ == '__main__':
                                     hdim=opt.hdim,
                                     dropout=opt.dropout)
 
+    if opt.dec_type == 'ntm':
+        decoder = nets.DecoderNTM(idim=opt.edim,
+                                  cdim=opt.hdim,
+                                  num_heads=opt.num_heads,
+                                  N=opt.N,
+                                  M=opt.M)
+
     model = None
     if TAR is None:
         if embedding is None:
@@ -187,16 +194,16 @@ if __name__ == '__main__':
     if opt.task == 'pattern':
         criterion = nn.BCELoss()
 
-    # optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()),
-    #                        lr=opt.lr,
-    #                        weight_decay=opt.wdecay)
+    optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()),
+                           lr=opt.lr,
+                           weight_decay=opt.wdecay)
     # optimizer = optim.SGD(params=filter(lambda p: p.requires_grad, model.parameters()),
     #                        lr=opt.lr,
     #                        weight_decay=opt.wdecay)
-    optimizer = optim.RMSprop(params=filter(lambda p: p.requires_grad, model.parameters()),
-                              momentum=0.9,
-                              alpha=0.95,
-                              lr=1e-4)
+    # optimizer = optim.RMSprop(params=filter(lambda p: p.requires_grad, model.parameters()),
+    #                           momentum=0.9,
+    #                           alpha=0.95,
+    #                           lr=1e-4)
 
     train(model, res_iters, opt, criterion, optimizer)
 
