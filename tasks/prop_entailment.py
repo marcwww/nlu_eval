@@ -99,7 +99,7 @@ def train(model, iters, opt, criterion, optim):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
 
-    print(valid(model, valid_iter))
+    # print(valid(model, valid_iter))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             seq, lbl = batch.seq, batch.lbl

@@ -141,6 +141,12 @@ if __name__ == '__main__':
                                   N=opt.N,
                                   M=opt.M,
                                   gpu=opt.gpu)
+    if opt.enc_type == 'sarnn':
+        encoder = nets.EncoderSARNN(idim=opt.edim,
+                                    hdim=opt.hdim,
+                                    stack_size=opt.stack_size,
+                                    sdim=opt.sdim,
+                                    stack_depth=opt.stack_depth)
 
     if opt.dec_type == 'simp-rnn':
         decoder = nets.DecoderSimpRNN(idim=opt.edim,

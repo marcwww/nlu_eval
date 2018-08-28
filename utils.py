@@ -9,13 +9,20 @@ import time
 
 LOGGER = logging.getLogger(__name__)
 
-
 def modulo_convolve(w, s):
-    # w: (N)
-    # s: (3)
-    assert s.size(0) == 3
-    t = torch.cat([w[-1:], w, w[:1]], dim=-1)
-    c = F.conv1d(t.view(1, 1, -1), s.view(1, 1, -1)).view(-1)
+    # w: (bsz, N)
+    # s: (bsz, 3)
+    bsz, ksz = s.shape
+    assert ksz == 3
+
+    # t: (1, bsz, 1+N+1)
+    t = torch.cat([w[:,-1:], w, w[:,:1]], dim=-1).\
+        unsqueeze(0)
+    device = s.device
+    kernel = torch.zeros(bsz, bsz, ksz).to(device)
+    kernel[range(bsz), range(bsz), :] += s
+    # c: (bsz, N)
+    c = F.conv1d(t, kernel).squeeze(0)
     return c
 
 def split_cols(mat, lengths):

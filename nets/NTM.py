@@ -47,13 +47,7 @@ class NTMMemory(nn.Module):
         return g * wc + (1 - g) * w_prev
 
     def _shift(self, wg, s):
-        res = []
-        for b in range(self.bsz):
-            res.append(utils.
-                       modulo_convolve(wg[b], s[b]).
-                       unsqueeze(0))
-
-        res = torch.cat(res, dim=0)
+        res = utils.modulo_convolve(wg, s)
         return res
 
     def _sharpen(self, ww, gamma):
