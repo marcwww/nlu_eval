@@ -144,6 +144,7 @@ if __name__ == '__main__':
     if opt.enc_type == 'sarnn':
         encoder = nets.EncoderSARNN(idim=opt.edim,
                                     hdim=opt.hdim,
+                                    nstack=opt.nstack,
                                     stack_size=opt.stack_size,
                                     sdim=opt.sdim,
                                     stack_depth=opt.stack_depth)

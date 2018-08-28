@@ -14,6 +14,7 @@ def model_opts(parser):
     # group.add_argument('-edim', type=int, default=32)
     # group.add_argument('-hdim', type=int, default=32)
     group.add_argument('-sdim', type=int, default=20)
+    group.add_argument('-nstack', type=int, default=2)
     group.add_argument('-stack_size', type=int, default=20)
     group.add_argument('-stack_depth', type=int, default=2)
     group.add_argument('-fine_tuning', default=False, action='store_true')
@@ -76,8 +77,9 @@ def train_opts(parser):
     # group.add_argument('-num_batches_valid', type=int, default=10)
     group.add_argument('-min_len_train', type=int, default=1)
     group.add_argument('-max_len_train', type=int, default=5)
-    group.add_argument('-min_len_valid', type=int, default=6)
+    # group.add_argument('-min_len_valid', type=int, default=6)
+    # group.add_argument('-max_len_valid', type=int, default=10)
+    group.add_argument('-min_len_valid', type=int, default=1)
     group.add_argument('-max_len_valid', type=int, default=10)
-
 
 

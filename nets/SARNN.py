@@ -11,6 +11,7 @@ class EncoderSARNN(nn.Module):
     def __init__(self,
                  idim,
                  hdim,
+                 nstack,
                  stack_size,
                  sdim,
                  stack_depth):
@@ -19,6 +20,7 @@ class EncoderSARNN(nn.Module):
         # here input dimention is equal to hidden dimention
         self.idim = idim
         self.hdim = hdim
+        self.nstack = nstack
         self.ssz = stack_size
         self.sdepth = stack_depth
         self.sdim = sdim
@@ -27,14 +29,14 @@ class EncoderSARNN(nn.Module):
         self.hid2hid = nn.Linear(hdim, hdim)
         self.emb2hid = nn.Linear(idim, hdim)
 
-        self.hid2act = nn.Linear(hdim, len(ACTS))
+        self.hid2act = nn.Linear(hdim, nstack * len(ACTS))
 
-        self.hid2stack = nn.Linear(hdim, sdim)
+        self.hid2stack = nn.Linear(hdim, nstack * sdim)
         self.stack2hid = nn.Linear(sdim * self.sdepth, hdim)
 
-        self.mem_bias = nn.Parameter(torch.Tensor(1, sdim),
+        self.mem_bias = nn.Parameter(torch.Tensor(nstack, sdim),
                                      requires_grad=False)
-        stdev = 1 / (np.sqrt(stack_size + sdim))
+        stdev = 1 / (np.sqrt(nstack * stack_size + sdim))
         nn.init.uniform(self.mem_bias, -stdev, stdev)
 
         # shift matrix for stack
@@ -49,23 +51,22 @@ class EncoderSARNN(nn.Module):
 
     def update_stack(self, stack,
                      p_push, p_pop,
-                     p_noop, push_val):
+                     p_noop, push_vals):
 
-        # stack: (bsz, ssz, sdim)
-        # p_push, p_pop, p_noop: (bsz, 1)
-        # push_val: (bsz, sdim)
-        # p_xact: bsz * nstack
+        # stack: (bsz, nstack, ssz, sdim)
+        # p_push, p_pop, p_noop: (bsz, nstack, 1, 1)
+        # push_vals: (bsz, nstack, sdim)
         p_push = p_push.unsqueeze(-1)
         p_pop = p_pop.unsqueeze(-1)
         p_noop = p_noop.unsqueeze(-1)
 
-        bsz, ssz, sdim  = stack.shape
         stack_push = self.W_push.matmul(stack)
-        stack_push[:, 0, :] += push_val
+        stack_push[:, :, 0, :] += push_vals
 
         stack_pop = self.W_pop.matmul(stack)
         # fill the stack with empty elements
-        stack_pop[:, self.ssz - 1:, :] += self.mem_bias
+        stack_pop[:, :, self.ssz - 1:, :] += \
+            self.mem_bias.unsqueeze(1).unsqueeze(0)
 
         stack  = p_push * stack_push + p_pop * stack_pop + p_noop * stack
         return stack
@@ -77,33 +78,41 @@ class EncoderSARNN(nn.Module):
         bsz = embs.shape[1]
 
         hid = self.zero.expand(bsz, self.hdim)
-        stack = self.mem_bias.expand(bsz,
-                                      self.ssz,
-                                      self.sdim)
+        stack = self.mem_bias.unsqueeze(1).\
+            unsqueeze(0).\
+            expand(bsz,
+                   self.nstack,
+                   self.ssz,
+                   self.sdim)
 
         output = []
         for emb in embs:
 
             mhid = self.emb2hid(emb) + self.hid2hid(hid)
 
-            # tops: (bsz, stack_depth * sdim)
-            tops = stack[:, :self.sdepth, :].contiguous(). \
-                view(bsz,
-                     self.sdepth * self.sdim)
+            # tops: (bsz, nstack, stack_depth * sdim)
+            tops = stack[:, :, :self.sdepth, :].contiguous(). \
+                view(bsz, self.nstack, -1)
 
+            # read: (bsz, nstack, hdim)
             read = self.stack2hid(tops)
-            mhid += read
+            mhid += read.sum(dim=1)
 
-            # act: (bsz, nacts)
-            # h_t??
+            # act: (bsz, nstack * nacts)
             act = self.hid2act(hid)
+            # act: (bsz, nstack, nacts)
+            act = act.view(-1, self.nstack, len(ACTS))
             act = F.softmax(act, dim=-1)
+            # p_xxx: (bsz, nstack, 1)
             p_push, p_pop, p_noop = \
                 act.chunk(len(ACTS), dim=-1)
 
-            push_val = self.hid2stack(hid)
-            push_val = self.nonLinear(push_val)
-            stack = self.update_stack(stack, p_push, p_pop, p_noop, push_val)
+            # push_vals: (bsz, nstack * sdim)
+            push_vals = self.hid2stack(hid)
+            # push_vals: (bsz, nstack, sdim)
+            push_vals = push_vals.view(-1, self.nstack, self.sdim)
+            push_vals = self.nonLinear(push_vals)
+            stack = self.update_stack(stack, p_push, p_pop, p_noop, push_vals)
 
             hid = self.nonLinear(mhid)
             outp = hid
