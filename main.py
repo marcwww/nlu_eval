@@ -152,6 +152,9 @@ if __name__ == '__main__':
                                     stack_size=opt.stack_size,
                                     sdim=opt.sdim,
                                     sdepth=opt.stack_depth)
+    if opt.enc_type == 'nse':
+        encoder = nets.EncoderNSE(idim=opt.edim,
+                                  dropout=opt.dropout)
 
     if opt.dec_type == 'simp-rnn':
         decoder = nets.DecoderSimpRNN(idim=opt.edim,
@@ -174,6 +177,10 @@ if __name__ == '__main__':
                                   num_heads=opt.num_heads,
                                   N=opt.N,
                                   M=opt.M)
+    if opt.dec_type == 'nse':
+        decoder = nets.DecoderNSE(idim=opt.edim,
+                                  N=opt.N,
+                                  dropout=opt.dropout)
 
     model = None
     if TAR is None:

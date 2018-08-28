@@ -3,3 +3,4 @@ from nets.SimpRNN import *
 from nets.SARNN import *
 from nets.NTM import *
 from nets.DNC import *
+from nets.NSE import *

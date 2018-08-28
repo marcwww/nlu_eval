@@ -104,7 +104,7 @@ def train(model, iters, opt, criterion, optim):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
 
-    print(valid(model, valid_iter))
+    # print(valid(model, valid_iter))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             src, tar = batch.src, batch.tar
@@ -150,12 +150,12 @@ class Model(nn.Module):
         self.embedding_enc = embedding_enc
         self.embedding_dec = embedding_dec
         self.dec_voc_size = self.embedding_dec.num_embeddings
-        self.hdim = self.encoder.hdim
+        self.hdim_dec = self.decoder.hdim
         self.padding_idx_enc = embedding_enc.padding_idx
         self.padding_idx_dec = embedding_dec.padding_idx
         self.dec_inp0 = nn.Parameter(torch.LongTensor([sos_idx]),
                                    requires_grad=False)
-        self.clf = nn.Linear(self.hdim, self.dec_voc_size)
+        self.clf = nn.Linear(self.hdim_dec, self.dec_voc_size)
 
     def forward(self, src, tar):
         mask = src.data.eq(self.padding_idx_enc)
@@ -170,8 +170,11 @@ class Model(nn.Module):
         hid = res['hid']
         enc_outputs = res['output']
         ntm_states = None
+        nse_states = None
         if 'ntm_states' in res.keys():
             ntm_states = res['ntm_states']
+        if 'nse_states' in res.keys():
+            nse_states = res['nse_states']
 
         inp = self.dec_inp0.expand(1, bsz)
         inp = self.embedding_dec(inp)
@@ -181,7 +184,8 @@ class Model(nn.Module):
             input = {'inp': inp,
                      'hid': hid,
                      'enc_outputs': enc_outputs,
-                     'ntm_states': ntm_states}
+                     'ntm_states': ntm_states,
+                     'nse_states': nse_states}
 
             res = self.decoder(input)
             output = res['output']
@@ -192,10 +196,11 @@ class Model(nn.Module):
                 pred_idx = output.max(dim=-1)[1]
                 inp = self.embedding_dec(pred_idx)
             hid = res['hid']
-            if 'ntm_states' in res.keys():
-                ntm_states = res['ntm_states']
-            else:
-                ntm_states = None
+            ntm_states = res['ntm_states'] \
+                if 'ntm_states' in res.keys() else None
+            nse_states = res['nse_states'] \
+                if 'nse_states' in res.keys() else None
+
             outputs.append(output)
 
         outputs = torch.cat(outputs, dim=0)
