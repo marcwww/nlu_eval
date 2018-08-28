@@ -7,6 +7,7 @@ from torch.nn.utils import clip_grad_norm
 import numpy as np
 import utils
 import random
+import copy
 from sklearn.metrics import accuracy_score, \
     precision_score, recall_score, f1_score
 
@@ -26,6 +27,64 @@ def gen_batch_copy(batch_info):
     inp[:seq_len, :, :seq_width] = seq
     inp[seq_len, :, seq_width] = 1.0  # delimiter in our control channel
     outp = seq.clone()
+
+    return inp.float(), outp.float()
+
+def gen_batch_mirror(batch_info):
+
+    min_len = batch_info['min_len']
+    max_len = batch_info['max_len']
+    bsz = batch_info['bsz']
+    seq_width = batch_info['seq_width']
+
+    seq_len = random.randint(min_len, max_len)
+    seq = np.random.binomial(1, 0.5, (seq_len, bsz, seq_width))
+    seq = torch.Tensor(seq)
+
+    # The input includes an additional channel used for the delimiter
+    inp = torch.zeros(seq_len + 1, bsz, seq_width + 1)
+    inp[:seq_len, :, :seq_width] = seq
+    inp[seq_len, :, seq_width] = 1.0  # delimiter in our control channel
+    seq_re = copy.deepcopy(seq.data.numpy()[::-1])
+    seq_re = torch.Tensor(seq_re)
+    outp = seq_re.clone()
+
+    return inp.float(), outp.float()
+
+def gen_batch_repeat(batch_info):
+
+    min_len = batch_info['min_len']
+    max_len = batch_info['max_len']
+    bsz = batch_info['bsz']
+    seq_width = batch_info['seq_width']
+
+    repeat_max = batch_info['repeat_max']
+    repeat_min = batch_info['repeat_min']
+
+    reps_mean = (repeat_max + repeat_min) / 2
+    reps_var = (((repeat_max - repeat_min + 1) ** 2) - 1) / 12
+    reps_std = np.sqrt(reps_var)
+
+    def rpt_normalize(reps):
+        return (reps - reps_mean) / reps_std
+
+    seq_len = random.randint(min_len, max_len)
+    reps = random.randint(repeat_min, repeat_max)
+
+    # Generate the sequence
+    seq = np.random.binomial(1, 0.5, (seq_len, bsz, seq_width))
+    seq = torch.from_numpy(seq)
+
+    # The input includes 2 additional channels, for end-of-sequence and num-reps
+    inp = torch.zeros(seq_len + 2, bsz, seq_width + 2)
+    inp[:seq_len, :, :seq_width] = seq
+    inp[seq_len, :, seq_width] = 1.0
+    inp[seq_len + 1, :, seq_width + 1] = rpt_normalize(reps)
+
+    # The output contain the repeated sequence + end marker
+    outp = torch.zeros(seq_len * reps + 1, bsz, seq_width + 1)
+    outp[:seq_len * reps, :, :seq_width] = seq.clone().repeat(reps, 1, 1)
+    outp[seq_len * reps, :, seq_width] = 1.0  # End marker
 
     return inp.float(), outp.float()
 
@@ -73,6 +132,11 @@ def build_iters(param_iter):
     min_len_valid = param_iter['min_len_valid']
     max_len_valid = param_iter['max_len_valid']
     seq_width = param_iter['seq_width']
+    repeat_min_train = param_iter['repeat_min_train']
+    repeat_max_train = param_iter['repeat_max_train']
+    repeat_min_valid = param_iter['repeat_min_valid']
+    repeat_max_valid = param_iter['repeat_max_valid']
+
 
     train_iter = None
     valid_iter = None
@@ -91,6 +155,42 @@ def build_iters(param_iter):
 
         train_iter = Iter(gen_batch_copy, train_info, bsz, device)
         valid_iter = Iter(gen_batch_copy, valid_info, bsz, device)
+
+    if sub_task == 'mirror':
+        train_info = {'num_batches': num_batches_train,
+                      'min_len': min_len_train,
+                      'max_len': max_len_train,
+                      'bsz': bsz,
+                      'seq_width': seq_width}
+
+        valid_info = {'num_batches': num_batches_valid,
+                      'min_len': min_len_valid,
+                      'max_len': max_len_valid,
+                      'bsz': bsz,
+                      'seq_width': seq_width}
+
+        train_iter = Iter(gen_batch_mirror, train_info, bsz, device)
+        valid_iter = Iter(gen_batch_mirror, valid_info, bsz, device)
+
+    if sub_task == 'repeat':
+        train_info = {'num_batches': num_batches_train,
+                      'min_len': min_len_train,
+                      'max_len': max_len_train,
+                      'bsz': bsz,
+                      'seq_width': seq_width,
+                      'repeat_min': repeat_min_train,
+                      'repeat_max': repeat_max_train}
+
+        valid_info = {'num_batches': num_batches_valid,
+                      'min_len': min_len_valid,
+                      'max_len': max_len_valid,
+                      'bsz': bsz,
+                      'seq_width': seq_width,
+                      'repeat_min': repeat_min_valid,
+                      'repeat_max': repeat_max_valid}
+
+        train_iter = Iter(gen_batch_repeat, train_info, bsz, device)
+        valid_iter = Iter(gen_batch_repeat, valid_info, bsz, device)
 
     return {'train_iter': train_iter,
             'valid_iter': valid_iter}

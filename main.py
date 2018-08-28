@@ -73,6 +73,10 @@ if __name__ == '__main__':
                   'min_len_valid': opt.min_len_valid,
                   'max_len_train': opt.max_len_train,
                   'max_len_valid': opt.max_len_valid,
+                  'repeat_min_train': opt.repeat_min_train,
+                  'repeat_max_train': opt.repeat_max_train,
+                  'repeat_min_valid': opt.repeat_min_valid,
+                  'repeat_max_valid': opt.repeat_max_valid,
                   'seq_width': opt.seq_width}
 
     res_iters = build_iters(param_iter)
@@ -147,7 +151,7 @@ if __name__ == '__main__':
                                     nstack=opt.nstack,
                                     stack_size=opt.stack_size,
                                     sdim=opt.sdim,
-                                    stack_depth=opt.stack_depth)
+                                    sdepth=opt.stack_depth)
 
     if opt.dec_type == 'simp-rnn':
         decoder = nets.DecoderSimpRNN(idim=opt.edim,

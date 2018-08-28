@@ -14,7 +14,7 @@ class EncoderSARNN(nn.Module):
                  nstack,
                  stack_size,
                  sdim,
-                 stack_depth):
+                 sdepth):
         super(EncoderSARNN, self).__init__()
 
         # here input dimention is equal to hidden dimention
@@ -22,7 +22,7 @@ class EncoderSARNN(nn.Module):
         self.hdim = hdim
         self.nstack = nstack
         self.ssz = stack_size
-        self.sdepth = stack_depth
+        self.sdepth = sdepth
         self.sdim = sdim
         self.nonLinear=nn.Tanh()
 
@@ -32,7 +32,8 @@ class EncoderSARNN(nn.Module):
         self.hid2act = nn.Linear(hdim, nstack * len(ACTS))
 
         self.hid2stack = nn.Linear(hdim, nstack * sdim)
-        self.stack2hid = nn.Linear(sdim * self.sdepth, hdim)
+        self.stack2hid = nn.Linear(nstack * sdim * sdepth,
+                                   nstack * hdim)
 
         self.mem_bias = nn.Parameter(torch.Tensor(nstack, sdim),
                                      requires_grad=False)
@@ -90,12 +91,13 @@ class EncoderSARNN(nn.Module):
 
             mhid = self.emb2hid(emb) + self.hid2hid(hid)
 
-            # tops: (bsz, nstack, stack_depth * sdim)
+            # tops: (bsz, nstack * stack_depth * sdim)
             tops = stack[:, :, :self.sdepth, :].contiguous(). \
-                view(bsz, self.nstack, -1)
+                view(bsz, -1)
 
-            # read: (bsz, nstack, hdim)
+            # read: (bsz, nstack * hdim)
             read = self.stack2hid(tops)
+            read = read.view(-1, self.nstack, self.hdim)
             mhid += read.sum(dim=1)
 
             # act: (bsz, nstack * nacts)
