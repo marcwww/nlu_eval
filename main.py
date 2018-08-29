@@ -1,4 +1,3 @@
-import preproc
 import nets
 from macros import *
 import torch
@@ -111,14 +110,17 @@ if __name__ == '__main__':
         if embedding is not None:
             one_hot_mtrx = utils.one_hot_matrix(SEQ.vocab.stoi, device, opt.edim)
             embedding.weight.data.copy_(one_hot_mtrx)
+            embedding.weight.requires_grad = False
 
         if embedding_enc is not None:
             one_hot_mtrx = utils.one_hot_matrix(SRC.vocab.stoi, device, opt.edim)
             embedding_enc.weight.data.copy_(one_hot_mtrx)
+            embedding_enc.weight.requires_grad = False
 
         if embedding_dec is not None:
             one_hot_mtrx = utils.one_hot_matrix(TAR.vocab.stoi, device, opt.edim)
             embedding_dec.weight.data.copy_(one_hot_mtrx)
+            embedding_dec.weight.requires_grad = False
 
     encoder = None
     decoder = None

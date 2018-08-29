@@ -97,7 +97,7 @@ def train(model, iters, opt, criterion, optim):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
 
-    print(valid(model, valid_iter))
+    # print(valid(model, valid_iter))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             seq1, seq2, lbl = batch.seq1, batch.seq2, batch.lbl
@@ -139,23 +139,37 @@ class Model(nn.Module):
         self.clf = nn.Linear(self.hdim * 4, 2)
         self.padding_idx = embedding.padding_idx
 
-    def enc(self, seq):
+    def enc(self, seq, ntm_states=None, nse_states=None):
         mask = seq.data.eq(self.padding_idx)
         len_total, bsz = seq.shape
         lens = len_total - mask.sum(dim=0)
 
         embs = self.embedding(seq)
         input = {'embs': embs,
-                 'lens': lens}
+                 'lens': lens,
+                 'ntm_states': ntm_states,
+                 'nse_states': nse_states}
         res = self.encoder(input)
         output = res['output']
         reps = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
                          dim=0)
-        return reps
+        res['reps'] = reps
+        return res
 
     def forward(self, seq1, seq2):
-        reps1 = self.enc(seq1)
-        reps2 = self.enc(seq2)
+        res1 = self.enc(seq1)
+        reps1 = res1['reps']
+        ntm_states = None
+        nse_states = None
+        if 'ntm_states' in res1.keys() and \
+            res1['ntm_states'] is not None:
+            ntm_states = res1['ntm_states']
+        if 'nse_states' in res1.keys() and \
+            res1['nse_states'] is not None:
+            nse_states = res1['nse_states']
+
+        res2 = self.enc(seq2, ntm_states, nse_states)
+        reps2 = res2['reps']
 
         if type(reps1) == tuple and \
                 type(reps2) == tuple:

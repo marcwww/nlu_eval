@@ -188,21 +188,37 @@ class EncoderNTM(nn.Module):
                 stdev = 5 / (np.sqrt(self.idim + self.M * self.num_heads + self.cdim))
                 nn.init.uniform(p, -stdev, stdev)
 
+    def _register_mem(self, mem):
+        for i in range(len(self.heads)):
+            self.heads[i].memory = mem
+
     def forward(self, input):
         embs = input['embs']
         lens = input['lens']
-
         bsz = embs.shape[1]
-        self.memory.reset(bsz)
-        reads = [r.clone().repeat(bsz, 1) for r in self.r0]
-        head_states = [head.create_new_state(bsz) for head in self.heads]
+
+        if 'ntm_states' in input.keys() and \
+                input['ntm_states'] is not None:
+            memory, reads, head_states = input['ntm_states']
+            self.memory = memory
+            self._register_mem(memory)
+        else:
+            self.memory.reset(bsz)
+            reads = [r.clone().repeat(bsz, 1) for r in self.r0]
+            head_states = [head.create_new_state(bsz) for head in self.heads]
+
         h = self.h0.expand(1, bsz, self.cdim).contiguous()
         c = self.c0.expand(1, bsz, self.cdim).contiguous()
 
         os = []
         hs = []
         cs = []
-        for emb in embs:
+
+        mem_res = [None] * bsz
+        reads_res = [[None] * bsz] * len(self.r0)
+        head_states_res = [[None] * bsz] * len(self.heads)
+
+        for t, emb in enumerate(embs):
 
             controller_inp = torch.cat([emb] + reads, dim=1).unsqueeze(0)
             controller_outp, (h, c) = self.controller(controller_inp, (h, c))
@@ -226,6 +242,15 @@ class EncoderNTM(nn.Module):
             o = torch.cat([controller_outp] + reads, dim=1)
             os.append(o.unsqueeze(0))
 
+            for b, l in enumerate(lens):
+                if t == l-1:
+                    for i in range(len(self.r0)):
+                        reads_res[i][b] = reads[i][b].unsqueeze(0)
+                    for i in range(len(self.heads)):
+                        head_states_res[i][b] = \
+                            head_states[i][b].unsqueeze(0)
+                    mem_res[b] = self.memory.memory[b].unsqueeze(0)
+
         os = torch.cat(os, dim=0)
         hs = torch.cat(hs, dim=0)
         cs = torch.cat(cs, dim=0)
@@ -234,7 +259,14 @@ class EncoderNTM(nn.Module):
         c = torch.cat([cs[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
                          dim=0).unsqueeze(0)
 
-        ntm_states = (self.memory, reads, head_states)
+        for i in range(len(self.r0)):
+            reads_res[i] = torch.cat(reads_res[i], dim=0)
+        for i in range(len(self.heads)):
+            head_states_res[i] = torch.cat(head_states_res[i], dim=0)
+        mem_res = torch.cat(mem_res, dim=0)
+        self.memory.memory = mem_res
+
+        ntm_states = (self.memory, reads_res, head_states_res)
         return {'output': os,
                 'hid': (h, c),
                 'ntm_states': ntm_states}

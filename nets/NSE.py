@@ -23,7 +23,6 @@ class EncoderNSE(nn.Module):
         self.c0_r = nn.Parameter(torch.zeros(idim), requires_grad=False)
         self.h0_w = nn.Parameter(torch.zeros(idim), requires_grad=False)
         self.c0_w = nn.Parameter(torch.zeros(idim), requires_grad=False)
-        self.mem = None
 
     def forward(self, input):
         # embs: (seq_len, bsz, edim)
@@ -44,22 +43,22 @@ class EncoderNSE(nn.Module):
 
         output = []
         # mem: (bsz, edim, seq_len)
-        self.mem = embs.clone().transpose(0, -1).transpose(0, 1)
+        mem = embs.clone().transpose(0, -1).transpose(0, 1)
         for t, emb in enumerate(embs):
             # o: (1, bsz, edim)
             o, (h_r, c_r) = self.lstm_r(emb.unsqueeze(0), (h_r, c_r))
             # z: (bsz, 1, seq_len)
-            z = F.softmax(o.transpose(0, 1).matmul(self.mem), dim=-1)
+            z = F.softmax(o.transpose(0, 1).matmul(mem), dim=-1)
             # m: (bsz, edim, 1)
-            m = self.mem.matmul(z.transpose(1, 2))
+            m = mem.matmul(z.transpose(1, 2))
             # c: (bsz, edim)
             c = self.compose(torch.cat([o.squeeze(0).unsqueeze(-1), m], dim=-1).\
                 view(-1, 2 * self.hdim))
             # h: (bsz, edim)
             h, (h_w, c_w) = self.lstm_w(c.unsqueeze(0), (h_w, c_w))
 
-            self.mem -= z
-            self.mem += h.squeeze(0).unsqueeze(-1).matmul(z)
+            mem = mem - z
+            mem = mem + h.squeeze(0).unsqueeze(-1).matmul(z)
 
             output.append(h)
             for b, l in enumerate(lens):
@@ -68,7 +67,7 @@ class EncoderNSE(nn.Module):
                     c_r_res[b] = c_r[:,b]
                     h_w_res[b] = h_w[:,b]
                     c_w_res[b] = c_w[:,b]
-                    mem_res[b] = self.mem[b].unsqueeze(0)
+                    mem_res[b] = mem[b].unsqueeze(0)
 
         output = torch.cat(output, dim=0)
         h_r = torch.cat(h_r_res, dim=0).unsqueeze(0)
@@ -104,7 +103,6 @@ class DecoderNSE(nn.Module):
                                      requires_grad=False)
         stdev = 1 / (np.sqrt(N + idim))
         nn.init.uniform(self.mem_bias, -stdev, stdev)
-        self.mem = None
 
     def forward(self, input):
         # embs: (seq_len, bsz, edim)
@@ -115,14 +113,12 @@ class DecoderNSE(nn.Module):
         if 'nse_states' in input.keys() and \
                 input['nse_states'] is not None:
             mem, hid_r = input['nse_states']
-            self.mem = mem
         else:
             mem = self.mem_bias.clone().expand(bsz, self.idim, self.N)
             # mem = inp.clone().squeeze(0).unsqueeze(-1).expand(bsz, self.idim, self.N)
             h_r = self.h0_r.expand(1, bsz, self.hdim).contiguous()
             c_r = self.c0_r.expand(1, bsz, self.hdim).contiguous()
             hid_r = (h_r, c_r)
-            self.mem = mem
 
         if type(hid) != tuple:
             c0 = self.c0.expand(1, bsz, self.cdim).contiguous()
@@ -134,22 +130,22 @@ class DecoderNSE(nn.Module):
             # o: (1, bsz, edim)
             o, hid_r = self.lstm_r(emb.unsqueeze(0), hid_r)
             # z: (bsz, 1, seq_len)
-            z = F.softmax(o.transpose(0, 1).matmul(self.mem), dim=-1)
+            z = F.softmax(o.transpose(0, 1).matmul(mem), dim=-1)
             # m: (bsz, edim, 1)
-            m = self.mem.matmul(z.transpose(1, 2))
+            m = mem.matmul(z.transpose(1, 2))
             # c: (bsz, edim)
             c = self.compose(torch.cat([o.squeeze(0).unsqueeze(-1), m], dim=-1).\
                 view(-1, 2 * self.hdim))
             # h: (bsz, edim)
             h, hid = self.lstm_w(c.unsqueeze(0), hid)
 
-            self.mem = self.mem - z
-            self.mem = self.mem + h.squeeze(0).unsqueeze(-1).matmul(z)
+            mem = mem - z
+            mem = mem + h.squeeze(0).unsqueeze(-1).matmul(z)
 
             output.append(h)
 
         output = torch.cat(output, dim=0)
-        nse_states = (self.mem, hid_r)
+        nse_states = (mem, hid_r)
 
         return {'output': output,
                 'hid': hid,
