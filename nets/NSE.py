@@ -30,8 +30,16 @@ class EncoderNSE(nn.Module):
         lens = input['lens']
         bsz = embs.shape[1]
 
-        h_r = self.h0_r.expand(1, bsz, self.hdim).contiguous()
-        c_r = self.c0_r.expand(1, bsz, self.hdim).contiguous()
+        # mem: (bsz, edim, seq_len)
+        if 'nse_states' in input.keys() and \
+                input['nse_states'] is not None:
+            mem, hid_r = input['nse_states']
+            h_r, c_r = hid_r
+        else:
+            mem = embs.clone().transpose(0, -1).transpose(0, 1)
+            h_r = self.h0_r.expand(1, bsz, self.hdim).contiguous()
+            c_r = self.c0_r.expand(1, bsz, self.hdim).contiguous()
+
         h_w = self.h0_w.expand(1, bsz, self.hdim).contiguous()
         c_w = self.c0_w.expand(1, bsz, self.hdim).contiguous()
 
@@ -42,8 +50,6 @@ class EncoderNSE(nn.Module):
         mem_res = [None] * bsz
 
         output = []
-        # mem: (bsz, edim, seq_len)
-        mem = embs.clone().transpose(0, -1).transpose(0, 1)
         for t, emb in enumerate(embs):
             # o: (1, bsz, edim)
             o, (h_r, c_r) = self.lstm_r(emb.unsqueeze(0), (h_r, c_r))
