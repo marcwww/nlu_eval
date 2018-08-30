@@ -139,7 +139,12 @@ class Model(nn.Module):
         self.clf = nn.Linear(self.hdim * 4, 2)
         self.padding_idx = embedding.padding_idx
 
-    def enc(self, seq, ntm_states=None, nse_states=None):
+    def enc(self, seq,
+            ntm_states=None,
+            nse_states=None,
+            stack=None,
+            tardis_states=None):
+
         mask = seq.data.eq(self.padding_idx)
         len_total, bsz = seq.shape
         lens = len_total - mask.sum(dim=0)
@@ -148,7 +153,9 @@ class Model(nn.Module):
         input = {'embs': embs,
                  'lens': lens,
                  'ntm_states': ntm_states,
-                 'nse_states': nse_states}
+                 'nse_states': nse_states,
+                 'stack': stack,
+                 'tardis_states': tardis_states}
         res = self.encoder(input)
         output = res['output']
         reps = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
@@ -161,14 +168,22 @@ class Model(nn.Module):
         reps1 = res1['reps']
         ntm_states = None
         nse_states = None
+        stack = None
+        tardis_states = None
         if 'ntm_states' in res1.keys() and \
             res1['ntm_states'] is not None:
             ntm_states = res1['ntm_states']
         if 'nse_states' in res1.keys() and \
             res1['nse_states'] is not None:
             nse_states = res1['nse_states']
+        if 'stack' in res1.keys() and \
+            res1['stack'] is not None:
+            stack = res1['stack']
+        if 'tardis_states' in res1.keys() and \
+            res1['tardis_states'] is not None:
+            tardis_states = res1['tardis_states']
 
-        res2 = self.enc(seq2, ntm_states, nse_states)
+        res2 = self.enc(seq2, ntm_states, nse_states, stack, tardis_states)
         reps2 = res2['reps']
 
         if type(reps1) == tuple and \

@@ -188,6 +188,15 @@ if __name__ == '__main__':
                                   num_heads=opt.num_heads,
                                   N=opt.N,
                                   M=opt.M)
+
+    if opt.dec_type == 'sarnn':
+        decoder = nets.DecoderSARNN(idim=opt.edim,
+                                    hdim=opt.hdim,
+                                    nstack=opt.nstack,
+                                    stack_size=opt.stack_size,
+                                    sdim=opt.sdim,
+                                    sdepth=opt.stack_depth)
+
     if opt.dec_type == 'nse':
         decoder = nets.DecoderNSE(idim=opt.edim,
                                   N=opt.N,
@@ -204,7 +213,7 @@ if __name__ == '__main__':
         model = Model(encoder, decoder,
                       embedding_enc, embedding_dec,
                       TAR.vocab.stoi[SOS]).to(device)
-        # utils.init_model(model)
+        utils.init_model(model)
 
     if opt.load_idx != -1:
         basename = "{}-epoch-{}".format(opt.task, opt.load_idx)

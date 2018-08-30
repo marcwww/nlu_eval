@@ -104,7 +104,7 @@ def train(model, iters, opt, criterion, optim):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
 
-    # print(valid(model, valid_iter))
+    print(valid(model, valid_iter))
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             src, tar = batch.src, batch.tar
@@ -171,10 +171,13 @@ class Model(nn.Module):
         enc_outputs = res['output']
         ntm_states = None
         nse_states = None
+        stack = None
         if 'ntm_states' in res.keys():
             ntm_states = res['ntm_states']
         if 'nse_states' in res.keys():
             nse_states = res['nse_states']
+        if 'stack' in res.keys():
+            stack = res['stack']
 
         inp = self.dec_inp0.expand(1, bsz)
         inp = self.embedding_dec(inp)
@@ -185,7 +188,8 @@ class Model(nn.Module):
                      'hid': hid,
                      'enc_outputs': enc_outputs,
                      'ntm_states': ntm_states,
-                     'nse_states': nse_states}
+                     'nse_states': nse_states,
+                     'stack': stack}
 
             res = self.decoder(input)
             output = res['output']
@@ -200,6 +204,8 @@ class Model(nn.Module):
                 if 'ntm_states' in res.keys() else None
             nse_states = res['nse_states'] \
                 if 'nse_states' in res.keys() else None
+            stack = res['stack'] \
+                if 'stack' in res.keys() else None
 
             outputs.append(output)
 

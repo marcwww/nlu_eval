@@ -4,12 +4,13 @@ from macros import *
 
 def model_opts(parser):
     group = parser.add_argument_group('model')
-    # group.add_argument('-edim', type=int, default=100)
+    # group.add_argument('-edim', type=int, default=50)
     group.add_argument('-edim', type=int, default=8 + 1)
     # group.add_argument('-edim', type=int, default=8 + 2)
     # group.add_argument('-edim', type=int, default=6 + 1)
     # group.add_argument('-hdim', type=int, default=256)
     group.add_argument('-hdim', type=int, default=120)
+    # group.add_argument('-hdim', type=int, default=50)
     group.add_argument('-odim', type=int, default=8)
     # group.add_argument('-odim', type=int, default=8 + 1)
     # group.add_argument('-odim', type=int, default=6)
@@ -34,6 +35,7 @@ def model_opts(parser):
     # group.add_argument('-N', type=int, default=40)
     # group.add_argument('-M', type=int, default=40)
     group.add_argument('-N', type=int, default=16)
+    # group.add_argument('-N', type=int, default=100)
     group.add_argument('-a_ratio', type=float, default=4/36)
     group.add_argument('-M', type=int, default=36)
     # group.add_argument('-enc_type', type=str, default='simp-rnn')
@@ -41,7 +43,8 @@ def model_opts(parser):
     # group.add_argument('-dec_type', type=str, default='lstm')
     # group.add_argument('-dec_type', type=str, default='alstm')
     # group.add_argument('-dec_type', type=str, default='ntm')
-    group.add_argument('-dec_type', type=str, default='nse')
+    # group.add_argument('-dec_type', type=str, default='nse')
+    group.add_argument('-dec_type', type=str, default='sarnn')
 
 def train_opts(parser):
     group = parser.add_argument_group('train')
@@ -72,6 +75,7 @@ def train_opts(parser):
     # group.add_argument('-task', type=str, default='scan')
     group.add_argument('-gpu', type=int, default=-1)
     group.add_argument('-lr', type=float, default=3e-3)
+    # group.add_argument('-lr', type=float, default=1e-3)
     # group.add_argument('-lr', type=float, default=1)
     # group.add_argument('-lr', type=float, default=0.125)
     group.add_argument('-lm_coef', type=float, default=0.5)

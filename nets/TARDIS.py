@@ -101,12 +101,15 @@ class EncoderTARDIS(nn.Module):
 
     def _write(self, w, h, t):
         val = self.h2m(h)
+        bsz = self.mem.shape[0]
         if t < self.N:
             pos = t
         else:
             _, pos = torch.topk(w, k=1, dim=-1)
             pos = pos.squeeze(-1)
-        self.mem[:, pos, self.a:] = val
+
+        # grad???
+        self.mem[range(bsz), pos, self.a:].data = val.squeeze(0)
 
     def forward(self, input):
         # embs: (seq_len, bsz, edim)
@@ -114,12 +117,18 @@ class EncoderTARDIS(nn.Module):
         lens = input['lens']
         bsz = embs.shape[1]
 
+        if 'tardis_states' in input.keys() and \
+            input['tardis_states'] is not None:
+            mem, w_sum = input['tardis_states']
+            self.mem = mem
+        else:
+            self.mem = self.mem_bias.clone().expand(bsz, self.N, self.a + self.c)
+            w_sum = self.u0.expand(bsz, self.N)
+
         h = self.h0.expand(1, bsz, self.hdim).contiguous()
 
-        self.bsz = bsz
-        self.mem = self.mem_bias.clone().expand(bsz, self.N, self.a + self.c)
-
-        w_sum = self.u0.expand(bsz, self.N)
+        w_sum_res = [None] * bsz
+        mem_res = [None] * bsz
 
         output = []
         for t, emb in enumerate(embs):
@@ -132,11 +141,18 @@ class EncoderTARDIS(nn.Module):
             self._write(w, h, t)
 
             output.append(h)
+            for b, l in enumerate(lens):
+                if t == l-1:
+                    w_sum_res[b] = w_sum[b].unsqueeze(0)
+                    mem_res[b] = self.mem[b].unsqueeze(0)
 
         output = torch.cat(output, dim=0)
         hid = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
                         dim=0).unsqueeze(0)
-        tardis_states = (self.mem, w_sum)
+
+        mem = torch.cat(mem_res, dim=0)
+        w_sum = torch.cat(w_sum_res, dim=0)
+        tardis_states = (mem, w_sum)
 
         return {'output': output,
                 'hid': hid,
