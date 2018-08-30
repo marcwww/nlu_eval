@@ -124,6 +124,48 @@ def init_seed(seed=None):
     torch.manual_seed(seed)
     random.seed(seed)
 
+def gumbel_softmax(logits, tau, hard, eps=1e-10):
+
+    shape = logits.size()
+    assert len(shape) == 2
+    y_soft = F._gumbel_softmax_sample(logits, tau=tau, eps=eps)
+    if hard:
+        bsz, N = y_soft.shape
+        k = []
+        for b in range(bsz):
+            idx = np.random.choice(N, p=y_soft[b].data.numpy())
+            k.append(idx)
+        k = np.array(k).reshape(-1, 1)
+        k = y_soft.new_tensor(k, dtype=torch.int64)
+
+        y_hard = logits.new_zeros(*shape).scatter_(-1, k.view(-1, 1), 1.0)
+        # this cool bit of code achieves two things:
+        # - makes the output value exactly one-hot (since we add then
+        #   subtract y_soft value)
+        # - makes the gradient equal to y_soft gradient (since we strip
+        #   all other gradients)
+        y = y_hard - y_soft.detach() + y_soft
+    else:
+        y = y_soft
+    return y
+
+def gumbel_sigmoid(logit, tau, hard):
+
+    shape = logit.shape
+    assert (len(shape) == 2 and shape[-1] == 1) \
+            or len(shape) == 1
+
+    if len(shape) == 1:
+        logit = logit.unsqueeze(-1)
+        shape = logit.shape
+
+    zero = logit.new_zeros(*shape)
+    res = torch.cat([logit, zero], dim=-1)
+    res = F.gumbel_softmax(res, tau=tau, hard=hard)
+
+    return res[:, 0]
+
+
 if __name__ == '__main__':
     up, down = shift_matrix(3)
     x = np.array([[0,1,2]]).transpose()

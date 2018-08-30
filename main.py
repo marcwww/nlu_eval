@@ -158,6 +158,15 @@ if __name__ == '__main__':
         encoder = nets.EncoderNSE(idim=opt.edim,
                                   dropout=opt.dropout)
 
+    if opt.enc_type == 'tardis':
+        a = int(opt.M * opt.a_ratio)
+        c = opt.M - a
+        encoder = nets.EncoderTARDIS(idim=opt.edim,
+                                     hdim=opt.hdim,
+                                     N=opt.N,
+                                     a=a,
+                                     c=c)
+
     if opt.dec_type == 'simp-rnn':
         decoder = nets.DecoderSimpRNN(idim=opt.edim,
                                       hdim=opt.hdim,
