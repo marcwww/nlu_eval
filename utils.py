@@ -124,7 +124,7 @@ def init_seed(seed=None):
     torch.manual_seed(seed)
     random.seed(seed)
 
-def gumbel_softmax(logits, tau, hard, eps=1e-10):
+def gumbel_softmax_sample(logits, tau, hard, eps=1e-10):
 
     shape = logits.size()
     assert len(shape) == 2
@@ -133,7 +133,7 @@ def gumbel_softmax(logits, tau, hard, eps=1e-10):
         bsz, N = y_soft.shape
         k = []
         for b in range(bsz):
-            idx = np.random.choice(N, p=y_soft[b].data.numpy())
+            idx = np.random.choice(N, p=y_soft[b].data.cpu().numpy())
             k.append(idx)
         k = np.array(k).reshape(-1, 1)
         k = y_soft.new_tensor(k, dtype=torch.int64)
@@ -149,7 +149,23 @@ def gumbel_softmax(logits, tau, hard, eps=1e-10):
         y = y_soft
     return y
 
-def gumbel_sigmoid(logit, tau, hard):
+def gumbel_sigmoid_sample(logit, tau, hard):
+
+    shape = logit.shape
+    assert (len(shape) == 2 and shape[-1] == 1) \
+            or len(shape) == 1
+
+    if len(shape) == 1:
+        logit = logit.unsqueeze(-1)
+        shape = logit.shape
+
+    zero = logit.new_zeros(*shape)
+    res = torch.cat([logit, zero], dim=-1)
+    res = gumbel_softmax_sample(res, tau=tau, hard=hard)
+
+    return res[:, 0]
+
+def gumbel_sigmoid_max(logit, tau, hard):
 
     shape = logit.shape
     assert (len(shape) == 2 and shape[-1] == 1) \

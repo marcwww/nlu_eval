@@ -64,10 +64,8 @@ class EncoderTARDIS(nn.Module):
         w = hid.matmul(atten)
 
         tau = F.softplus(self.h2tau(h.squeeze(0))) + 1
-        # hard = False \
-            # if self.training else True
-        hard = True
-        w = F.gumbel_softmax(w.squeeze(-1), tau, hard=hard)
+
+        w = F.gumbel_softmax(w.squeeze(-1), tau, hard=True)
 
         # r: (bsz, 1, a+c)
         r = w.unsqueeze(1).matmul(self.mem)
@@ -87,8 +85,9 @@ class EncoderTARDIS(nn.Module):
         # gumbel-sigmoid??
         alpha_beta = alpha_beta.squeeze(0)
         alpha, beta = alpha_beta[:, 0], alpha_beta[:, 1]
-        alpha = utils.gumbel_sigmoid(alpha, tau=0.3, hard=True)
-        beta = utils.gumbel_sigmoid(beta, tau=0.3, hard=True)
+
+        alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=True)
+        beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=True)
 
         c = beta.unsqueeze(-1) * self.h2c(h) + \
             self.i2c(inp) +\
@@ -106,6 +105,7 @@ class EncoderTARDIS(nn.Module):
             pos = t
         else:
             _, pos = torch.topk(w, k=1, dim=-1)
+            pos = pos.squeeze(-1)
         self.mem[:, pos, self.a:] = val
 
     def forward(self, input):
