@@ -235,6 +235,7 @@ class DecoderTARDIS(nn.Module):
 
         tau = F.softplus(self.h2tau(h.squeeze(0))) + 1
 
+        # w = F.gumbel_softmax(w.squeeze(-1), tau, hard=False)
         w = F.gumbel_softmax(w.squeeze(-1), tau, hard=True)
 
         # r: (bsz, 1, a+c)
@@ -249,7 +250,7 @@ class DecoderTARDIS(nn.Module):
 
         # alpha_beta: (bsz, 2)
         alpha_beta = self.h2alpha_beta(h_prev) + \
-                     self.i2alpha_beta(inp) +\
+                     self.i2alpha_beta(inp) + \
                      self.r2alpha_beta(r.squeeze(1))
 
         # gumbel-sigmoid??
@@ -258,9 +259,11 @@ class DecoderTARDIS(nn.Module):
 
         alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=True)
         beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=True)
+        # alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=False)
+        # beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=False)
 
         c = beta.unsqueeze(-1) * self.h2c(h_prev) + \
-            self.i2c(inp) +\
+            self.i2c(inp) + \
             alpha.unsqueeze(-1) * self.r2c(r.squeeze(1))
         c = F.tanh(c)
         c = f.unsqueeze(0).unsqueeze(-1) * c_prev + \
@@ -280,6 +283,7 @@ class DecoderTARDIS(nn.Module):
 
         # grad???
         # self.mem[range(bsz), pos, self.a:].data = val.squeeze(0)
+        # self.mem[range(bsz), pos, self.a:] = val.squeeze(0)
         val = val.squeeze(0)
         # mem: (bsz, N, a+c)
         mem = list(self.mem)
@@ -287,11 +291,10 @@ class DecoderTARDIS(nn.Module):
             a, c = mem[b][pos[b], :self.a], val[b]
             cell = torch.cat([a, c], dim=-1).unsqueeze(0)
             mem[b] = torch.cat([mem[b][:pos[b]],
-                       cell,
-                       mem[b][pos[b]+1:]], dim=0).unsqueeze(0)
+                                cell,
+                                mem[b][pos[b] + 1:]], dim=0).unsqueeze(0)
 
         self.mem = torch.cat(mem, dim=0)
-        # self.mem[range(bsz), pos, self.a:] = val.squeeze(0)
 
     def forward(self, input):
         # embs: (seq_len, bsz, edim)
@@ -326,7 +329,7 @@ class DecoderTARDIS(nn.Module):
             self._write(w, h, T)
 
             output.append(h)
-            T += 1
+            T += len(inp)
 
         output = torch.cat(output, dim=0)
         tardis_states = (self.mem, w_sum, T)
