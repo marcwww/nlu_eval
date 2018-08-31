@@ -202,6 +202,15 @@ if __name__ == '__main__':
                                   N=opt.N,
                                   dropout=opt.dropout)
 
+    if opt.dec_type == 'tardis':
+        a = int(opt.M * opt.a_ratio)
+        c = opt.M - a
+        decoder = nets.DecoderTARDIS(idim=opt.edim,
+                                     hdim=opt.hdim,
+                                     N=opt.N,
+                                     a=a,
+                                     c=c)
+
     model = None
     if TAR is None:
         if embedding is None:
