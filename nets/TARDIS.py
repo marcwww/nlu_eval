@@ -17,10 +17,10 @@ class EncoderTARDIS(nn.Module):
         self.a = a
         self.c = c
 
-        self.mem_bias = nn.Parameter(torch.Tensor(N, a + c),
+        self.mem_bias = nn.Parameter(torch.zeros(N, a + c),
                                      requires_grad=False)
-        stdev = 1 / (np.sqrt(N + a +c))
-        nn.init.uniform(self.mem_bias, -stdev, stdev)
+        stdev = 1 / (np.sqrt(N + a))
+        nn.init.uniform(self.mem_bias[:, :a], -stdev, stdev)
 
         self.h2w = nn.Linear(hdim, a + c, bias=False)
         self.i2w = nn.Linear(idim, a + c, bias=False)
@@ -40,6 +40,7 @@ class EncoderTARDIS(nn.Module):
         self.r2c = nn.Linear(a + c, hdim, bias=False)
 
         self.h0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
+        self.c0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
 
         self.atten_base = nn.Parameter(torch.Tensor(1, a + c, 1))
 
@@ -71,14 +72,14 @@ class EncoderTARDIS(nn.Module):
         r = w.unsqueeze(1).matmul(self.mem)
         return r, w
 
-    def _update_hid(self, inp, h, r):
+    def _update_hid(self, inp, h_prev, c_prev, r):
         # gates: (bsz, 3)
-        gates = self.h2gates(h) + self.i2gates(inp) + self.r2gates(r.squeeze(1))
+        gates = self.h2gates(h_prev) + self.i2gates(inp) + self.r2gates(r.squeeze(1))
         gates = F.sigmoid(gates.squeeze(0))
         f, i, o = gates[:, 0], gates[:, 1], gates[:, 2]
 
         # alpha_beta: (bsz, 2)
-        alpha_beta = self.h2alpha_beta(h) + \
+        alpha_beta = self.h2alpha_beta(h_prev) + \
                      self.i2alpha_beta(inp) +\
                      self.r2alpha_beta(r.squeeze(1))
 
@@ -89,15 +90,15 @@ class EncoderTARDIS(nn.Module):
         alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=True)
         beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=True)
 
-        c = beta.unsqueeze(-1) * self.h2c(h) + \
+        c = beta.unsqueeze(-1) * self.h2c(h_prev) + \
             self.i2c(inp) +\
             alpha.unsqueeze(-1) * self.r2c(r.squeeze(1))
         c = F.tanh(c)
-        c = f.unsqueeze(0).unsqueeze(-1) * c + \
+        c = f.unsqueeze(0).unsqueeze(-1) * c_prev + \
             i.unsqueeze(0).unsqueeze(-1) * c
 
-        hid = o.unsqueeze(0).unsqueeze(-1) * F.tanh(c)
-        return hid
+        h = o.unsqueeze(0).unsqueeze(-1) * F.tanh(c)
+        return h, c
 
     def _write(self, w, h, t):
         val = self.h2m(h)
@@ -139,9 +140,11 @@ class EncoderTARDIS(nn.Module):
             T = 0
 
         h = self.h0.expand(1, bsz, self.hdim).contiguous()
+        c = self.c0.expand(1, bsz, self.hdim).contiguous()
 
         w_sum_res = [None] * bsz
         mem_res = [None] * bsz
+        c_res = [None] * bsz
 
         output = []
         for t, emb in enumerate(embs):
@@ -150,7 +153,7 @@ class EncoderTARDIS(nn.Module):
             r, w = self._read(h, emb, u)
             w_sum = w_sum + w
 
-            h = self._update_hid(emb, h, r)
+            h, c = self._update_hid(emb, h, c, r)
             self._write(w, h, t + T)
 
             output.append(h)
@@ -158,18 +161,20 @@ class EncoderTARDIS(nn.Module):
                 if t == l-1:
                     w_sum_res[b] = w_sum[b].unsqueeze(0)
                     mem_res[b] = self.mem[b].unsqueeze(0)
+                    c_res[b] = c[:, b].unsqueeze(1)
 
         output = torch.cat(output, dim=0)
-        hid = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
+        h = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
                         dim=0).unsqueeze(0)
 
         mem = torch.cat(mem_res, dim=0)
         w_sum = torch.cat(w_sum_res, dim=0)
+        c = torch.cat(c_res, dim=1)
         T = T + len(embs)
         tardis_states = (mem, w_sum, T)
 
         return {'output': output,
-                'hid': hid,
+                'hid': (h, c),
                 'tardis_states': tardis_states}
 
 class DecoderTARDIS(nn.Module):
@@ -181,10 +186,10 @@ class DecoderTARDIS(nn.Module):
         self.a = a
         self.c = c
 
-        self.mem_bias = nn.Parameter(torch.Tensor(N, a + c),
+        self.mem_bias = nn.Parameter(torch.zeros(N, a + c),
                                      requires_grad=False)
-        stdev = 1 / (np.sqrt(N + a +c))
-        nn.init.uniform(self.mem_bias, -stdev, stdev)
+        stdev = 1 / (np.sqrt(N + a))
+        nn.init.uniform(self.mem_bias[:, :a], -stdev, stdev)
 
         self.h2w = nn.Linear(hdim, a + c, bias=False)
         self.i2w = nn.Linear(idim, a + c, bias=False)
@@ -204,6 +209,7 @@ class DecoderTARDIS(nn.Module):
         self.r2c = nn.Linear(a + c, hdim, bias=False)
 
         self.h0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
+        self.c0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
 
         self.atten_base = nn.Parameter(torch.Tensor(1, a + c, 1))
 
@@ -235,14 +241,14 @@ class DecoderTARDIS(nn.Module):
         r = w.unsqueeze(1).matmul(self.mem)
         return r, w
 
-    def _update_hid(self, inp, h, r):
+    def _update_hid(self, inp, h_prev, c_prev, r):
         # gates: (bsz, 3)
-        gates = self.h2gates(h) + self.i2gates(inp) + self.r2gates(r.squeeze(1))
+        gates = self.h2gates(h_prev) + self.i2gates(inp) + self.r2gates(r.squeeze(1))
         gates = F.sigmoid(gates.squeeze(0))
         f, i, o = gates[:, 0], gates[:, 1], gates[:, 2]
 
         # alpha_beta: (bsz, 2)
-        alpha_beta = self.h2alpha_beta(h) + \
+        alpha_beta = self.h2alpha_beta(h_prev) + \
                      self.i2alpha_beta(inp) +\
                      self.r2alpha_beta(r.squeeze(1))
 
@@ -253,15 +259,15 @@ class DecoderTARDIS(nn.Module):
         alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=True)
         beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=True)
 
-        c = beta.unsqueeze(-1) * self.h2c(h) + \
+        c = beta.unsqueeze(-1) * self.h2c(h_prev) + \
             self.i2c(inp) +\
             alpha.unsqueeze(-1) * self.r2c(r.squeeze(1))
         c = F.tanh(c)
-        c = f.unsqueeze(0).unsqueeze(-1) * c + \
+        c = f.unsqueeze(0).unsqueeze(-1) * c_prev + \
             i.unsqueeze(0).unsqueeze(-1) * c
 
-        hid = o.unsqueeze(0).unsqueeze(-1) * F.tanh(c)
-        return hid
+        h = o.unsqueeze(0).unsqueeze(-1) * F.tanh(c)
+        return h, c
 
     def _write(self, w, h, t):
         val = self.h2m(h)
@@ -302,9 +308,12 @@ class DecoderTARDIS(nn.Module):
             w_sum = self.u0.expand(bsz, self.N)
             T = 0
 
-        h = hid
-        if type(hid) == tuple:
-            h = hid[0]
+        if type(hid) != tuple:
+            c0 = self.c0.expand(1, bsz, self.hdim).\
+                contiguous()
+            hid = (hid, c0)
+
+        h, c = hid
 
         output = []
         for emb in inp:
@@ -313,7 +322,7 @@ class DecoderTARDIS(nn.Module):
             r, w = self._read(h, emb, u)
             w_sum = w_sum + w
 
-            h = self._update_hid(emb, h, r)
+            h, c = self._update_hid(emb, h, c, r)
             self._write(w, h, T)
 
             output.append(h)
@@ -323,6 +332,6 @@ class DecoderTARDIS(nn.Module):
         tardis_states = (self.mem, w_sum, T)
 
         return {'output': output,
-                'hid': h,
+                'hid': (h, c),
                 'tardis_states': tardis_states}
 
