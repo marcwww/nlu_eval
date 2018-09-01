@@ -12,7 +12,7 @@ class EncoderALSTM(nn.Module):
         super(EncoderALSTM, self).__init__()
         self.idim = idim
         self.hdim = hdim
-        self.lstm = nn.LSTM(input_size=idim,
+        self.rnn = nn.LSTM(input_size=idim,
                             hidden_size=hdim,
                             dropout = dropout)
         self.h0 = nn.Parameter(torch.zeros(hdim), requires_grad=False)
@@ -27,23 +27,23 @@ class EncoderALSTM(nn.Module):
         h = self.h0.expand(1, bsz, self.hdim).contiguous()
         c = self.c0.expand(1, bsz, self.hdim).contiguous()
 
-        h_res = []
-        c_res = []
+        h_res = [None] * bsz
+        c_res = [None] * bsz
         output = []
         for t, emb in enumerate(embs):
             if len(output) > 0:
                 hids = torch.cat(output, dim=0)
                 h = self.atten(h, hids)
 
-            o, (h, c) = self.rnn(emb, (h, c))
+            o, (h, c) = self.rnn(emb.unsqueeze(0), (h, c))
             output.append(o)
             for b, l in enumerate(lens):
                 if t == l-1:
                     h_res[b] = h[:,b].unsqueeze(0)
                     c_res[b] = c[:,b].unsqueeze(0)
 
-        h = torch.cat(h_res, dim=0)
-        c = torch.cat(c_res, dim=0)
+        h = torch.cat(h_res, dim=1)
+        c = torch.cat(c_res, dim=1)
         output = torch.cat(output, dim=0)
 
         return {'output': output,

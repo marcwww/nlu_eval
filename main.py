@@ -134,6 +134,11 @@ if __name__ == '__main__':
                                    hdim=opt.hdim,
                                    dropout=opt.dropout)
 
+    if opt.enc_type == 'alstm':
+        encoder = nets.EncoderALSTM(idim=opt.edim,
+                                    hdim=opt.hdim,
+                                    dropout=opt.dropout)
+
     if opt.enc_type == 'ntm':
         encoder = nets.EncoderNTM(idim=opt.edim,
                                   cdim=opt.hdim,
