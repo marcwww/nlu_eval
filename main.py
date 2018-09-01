@@ -170,7 +170,8 @@ if __name__ == '__main__':
                                      hdim=opt.hdim,
                                      N=opt.N,
                                      a=a,
-                                     c=c)
+                                     c=c,
+                                     is_soft=opt.soft_enc)
 
     if opt.dec_type == 'simp-rnn':
         decoder = nets.DecoderSimpRNN(idim=opt.edim,
@@ -214,7 +215,8 @@ if __name__ == '__main__':
                                      hdim=opt.hdim,
                                      N=opt.N,
                                      a=a,
-                                     c=c)
+                                     c=c,
+                                     is_soft=opt.soft_dec)
 
     model = None
     if TAR is None:
@@ -257,5 +259,8 @@ if __name__ == '__main__':
     #                           alpha=0.95,
     #                           lr=1e-4)
 
+    param_str = utils.param_str(opt)
+    for key, val in param_str.items():
+        print(str(key) + ': ' + str(val))
     train(model, res_iters, opt, criterion, optimizer)
 

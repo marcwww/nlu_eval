@@ -9,13 +9,14 @@ from torch.nn.utils.rnn import pack_padded_sequence as pack, \
 import crash_on_ipy
 
 class EncoderTARDIS(nn.Module):
-    def __init__(self, idim, hdim, N, a, c):
+    def __init__(self, idim, hdim, N, a, c, is_soft):
         super(EncoderTARDIS, self).__init__()
         self.idim = idim
         self.hdim = hdim
         self.N = N
         self.a = a
         self.c = c
+        self.is_soft = is_soft
 
         self.mem_bias = nn.Parameter(torch.zeros(N, a + c),
                                      requires_grad=False)
@@ -66,7 +67,8 @@ class EncoderTARDIS(nn.Module):
 
         tau = F.softplus(self.h2tau(h.squeeze(0))) + 1
 
-        w = F.gumbel_softmax(w.squeeze(-1), tau, hard=True)
+        hard = False if self.is_soft else True
+        w = F.gumbel_softmax(w.squeeze(-1), tau, hard=hard)
 
         # r: (bsz, 1, a+c)
         r = w.unsqueeze(1).matmul(self.mem)
@@ -87,8 +89,9 @@ class EncoderTARDIS(nn.Module):
         alpha_beta = alpha_beta.squeeze(0)
         alpha, beta = alpha_beta[:, 0], alpha_beta[:, 1]
 
-        alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=True)
-        beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=True)
+        hard = False if self.is_soft else True
+        alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=hard)
+        beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=hard)
 
         c = beta.unsqueeze(-1) * self.h2c(h_prev) + \
             self.i2c(inp) +\
@@ -178,13 +181,14 @@ class EncoderTARDIS(nn.Module):
                 'tardis_states': tardis_states}
 
 class DecoderTARDIS(nn.Module):
-    def __init__(self, idim, hdim, N, a, c):
+    def __init__(self, idim, hdim, N, a, c, is_soft):
         super(DecoderTARDIS, self).__init__()
         self.idim = idim
         self.hdim = hdim
         self.N = N
         self.a = a
         self.c = c
+        self.is_soft = is_soft
 
         self.mem_bias = nn.Parameter(torch.zeros(N, a + c),
                                      requires_grad=False)
@@ -235,8 +239,9 @@ class DecoderTARDIS(nn.Module):
 
         tau = F.softplus(self.h2tau(h.squeeze(0))) + 1
 
+        hard = False if self.is_soft else True
         # w = F.gumbel_softmax(w.squeeze(-1), tau, hard=False)
-        w = F.gumbel_softmax(w.squeeze(-1), tau, hard=True)
+        w = F.gumbel_softmax(w.squeeze(-1), tau, hard=hard)
 
         # r: (bsz, 1, a+c)
         r = w.unsqueeze(1).matmul(self.mem)
@@ -257,8 +262,9 @@ class DecoderTARDIS(nn.Module):
         alpha_beta = alpha_beta.squeeze(0)
         alpha, beta = alpha_beta[:, 0], alpha_beta[:, 1]
 
-        alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=True)
-        beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=True)
+        hard = False if self.is_soft else True
+        alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=hard)
+        beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=hard)
         # alpha = utils.gumbel_sigmoid_max(alpha, tau=0.3, hard=False)
         # beta = utils.gumbel_sigmoid_max(beta, tau=0.3, hard=False)
 

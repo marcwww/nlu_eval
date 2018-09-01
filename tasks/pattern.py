@@ -221,6 +221,19 @@ def train(model, iters, opt, criterion, optim):
     valid_iter = iters['valid_iter']
 
     # print(valid(model, valid_iter))
+    basename = "{}-{}-{}-{},{}-{},{}-{}".format(opt.task,
+                                                opt.sub_task,
+                                                opt.enc_type,opt.min_len_train,
+                                                opt.max_len_train,
+                                                opt.min_len_valid,
+                                                opt.max_len_valid,
+                                                utils.time_int())
+    log_fname = basename + ".json"
+    log_path = os.path.join(RES, log_fname)
+    with open(log_path, 'w') as f:
+        f.write(str(utils.param_str(opt)) + '\n')
+
+    losses = []
     for epoch in range(opt.nepoch):
         for i, (inp, out_tar) in enumerate(train_iter):
             model.train()
@@ -230,6 +243,8 @@ def train(model, iters, opt, criterion, optim):
             out = out['res_clf']
 
             loss = criterion(out, out_tar)
+            losses.append(loss.item())
+
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()
@@ -240,13 +255,18 @@ def train(model, iters, opt, criterion, optim):
 
             if (i + 1) % int(1 / 4 * len(train_iter)) == 0:
                 # print('\r')
+                loss_ave = np.array(losses).sum()/len(losses)
+                losses = []
                 accurracy = \
                     valid(model, valid_iter)
-                print('{\'Epoch\':%d, \'Format\':\'a\', \'Metrics\':[%.4f]}' %
-                      (epoch, accurracy))
+                log_str = '{\'Epoch\':%d, \'Format\':\'a/l\', \'Metrics\':[%.4f, %.4f]}' % \
+                          (epoch, accurracy, loss_ave)
+                print(log_str)
+                with open(log_path, 'a+') as f:
+                    f.write(log_str + '\n')
 
         if (epoch + 1) % opt.save_per == 0:
-            basename = "{}-epoch-{}".format(opt.task, epoch)
+            # basename = "{}-{}-epoch-{}".format(opt.task, opt.enc_type, epoch)
             model_fname = basename + ".model"
             save_path = os.path.join(RES, model_fname)
             print('Saving to ' + save_path)

@@ -181,6 +181,15 @@ def gumbel_sigmoid_max(logit, tau, hard):
 
     return res[:, 0]
 
+def param_str(opt):
+    res_str = {}
+    for attr in dir(opt):
+        if attr[0] != '_':
+            res_str[attr] = getattr(opt, attr)
+    return res_str
+
+def time_int():
+    return int(time.time())
 
 if __name__ == '__main__':
     up, down = shift_matrix(3)

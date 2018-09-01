@@ -63,7 +63,7 @@ class EncoderNSE(nn.Module):
             # h: (bsz, edim)
             h, (h_w, c_w) = self.lstm_w(c.unsqueeze(0), (h_w, c_w))
 
-            mem = mem - z
+            mem = mem * (1 - z)
             mem = mem + h.squeeze(0).unsqueeze(-1).matmul(z)
 
             output.append(h)
@@ -145,7 +145,7 @@ class DecoderNSE(nn.Module):
             # h: (bsz, edim)
             h, hid = self.lstm_w(c.unsqueeze(0), hid)
 
-            mem = mem - z
+            mem = mem * (1 - z)
             mem = mem + h.squeeze(0).unsqueeze(-1).matmul(z)
 
             output.append(h)
