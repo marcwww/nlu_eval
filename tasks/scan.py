@@ -104,7 +104,18 @@ def train(model, iters, opt, criterion, optim):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
 
+    basename = "{}-{}-{}-{}-{}".format(opt.task,
+                                       opt.sub_task,
+                                       opt.enc_type,
+                                       opt.dec_type,
+                                       utils.time_int())
+    log_fname = basename + ".json"
+    log_path = os.path.join(RES, log_fname)
+    with open(log_path, 'w') as f:
+        f.write(str(utils.param_str(opt)) + '\n')
     # print(valid(model, valid_iter))
+
+    losses = []
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             src, tar = batch.src, batch.tar
@@ -117,6 +128,7 @@ def train(model, iters, opt, criterion, optim):
             outputs = res['outputs']
             dec_voc_size = model.dec_voc_size
             loss = criterion(outputs.view(-1, dec_voc_size), tar.view(-1))
+            losses.append(loss.item())
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()
@@ -128,11 +140,15 @@ def train(model, iters, opt, criterion, optim):
             if (i + 1) % int(1 / 4 * len(train_iter)) == 0:
                 # print('\r')
                 accurracy = valid(model, valid_iter)
-                print('{\'Epoch\':%d, \'Format\':\'a\', \'Metric\':[%.4f]}' %
-                      (epoch, accurracy) )
+                loss_ave = np.array(losses).sum() / len(losses)
+                losses = []
+                log_str = '{\'Epoch\':%d, \'Format\':\'a/l\', \'Metrics\':[%.4f, %.4f]}' % \
+                          (epoch, accurracy, loss_ave)
+                print(log_str)
+                with open(log_path, 'a+') as f:
+                    f.write(log_str + '\n')
 
         if (epoch + 1) % opt.save_per == 0:
-            basename = "{}-epoch-{}".format(opt.task, epoch)
             model_fname = basename + ".model"
             save_path = os.path.join(RES, model_fname)
             print('Saving to ' + save_path)

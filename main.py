@@ -161,7 +161,8 @@ if __name__ == '__main__':
                                     sdepth=opt.stack_depth)
     if opt.enc_type == 'nse':
         encoder = nets.EncoderNSE(idim=opt.edim,
-                                  dropout=opt.dropout)
+                                  dropout=opt.dropout,
+                                  N=opt.N)
 
     if opt.enc_type == 'tardis':
         a = int(opt.M * opt.a_ratio)

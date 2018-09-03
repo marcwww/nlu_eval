@@ -108,6 +108,7 @@ class Attention(nn.Module):
         # c: (bsz, hdim)
         c = c.sum(0).squeeze(-1).unsqueeze(0)
         ha = self.hc2ha(torch.cat([h, c], dim=-1))
+        ha = F.tanh(ha)
         return ha
 
 def get_ms():

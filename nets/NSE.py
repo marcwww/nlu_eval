@@ -8,10 +8,11 @@ from torch.nn.utils.rnn import pack_padded_sequence as pack, \
     pad_packed_sequence as unpack
 
 class EncoderNSE(nn.Module):
-    def __init__(self, idim, dropout):
+    def __init__(self, idim, dropout, N):
         super(EncoderNSE, self).__init__()
         self.idim = idim
         self.hdim = idim
+        self.N = N
         self.lstm_r = nn.LSTM(input_size=idim,
                             hidden_size=idim,
                             dropout = dropout)
@@ -23,6 +24,10 @@ class EncoderNSE(nn.Module):
         self.c0_r = nn.Parameter(torch.zeros(idim), requires_grad=False)
         self.h0_w = nn.Parameter(torch.zeros(idim), requires_grad=False)
         self.c0_w = nn.Parameter(torch.zeros(idim), requires_grad=False)
+        self.mem_bias = nn.Parameter(torch.zeros(idim, N),
+                                     requires_grad=False)
+        stdev = 1 / (np.sqrt(N + idim))
+        nn.init.uniform(self.mem_bias, -stdev, stdev)
 
     def forward(self, input):
         # embs: (seq_len, bsz, edim)
@@ -37,6 +42,11 @@ class EncoderNSE(nn.Module):
             h_r, c_r = hid_r
         else:
             mem = embs.clone().transpose(0, -1).transpose(0, 1)
+            # mem_N = mem.shape[-1]
+            # if mem_N < self.N:
+            #     mem_init = self.mem_bias.expand(bsz, self.idim, self.N)
+            #     mem = torch.cat([mem, mem_init[:,:,mem_N:]], dim=-1)
+
             h_r = self.h0_r.expand(1, bsz, self.hdim).contiguous()
             c_r = self.c0_r.expand(1, bsz, self.hdim).contiguous()
 
@@ -60,6 +70,7 @@ class EncoderNSE(nn.Module):
             # c: (bsz, edim)
             c = self.compose(torch.cat([o.squeeze(0).unsqueeze(-1), m], dim=-1).\
                 view(-1, 2 * self.hdim))
+            c = F.tanh(c)
             # h: (bsz, edim)
             h, (h_w, c_w) = self.lstm_w(c.unsqueeze(0), (h_w, c_w))
 
@@ -142,6 +153,7 @@ class DecoderNSE(nn.Module):
             # c: (bsz, edim)
             c = self.compose(torch.cat([o.squeeze(0).unsqueeze(-1), m], dim=-1).\
                 view(-1, 2 * self.hdim))
+            c = F.tanh(c)
             # h: (bsz, edim)
             h, hid = self.lstm_w(c.unsqueeze(0), hid)
 

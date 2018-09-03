@@ -97,7 +97,17 @@ def train(model, iters, opt, criterion, optim):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
 
+    basename = "{}-{}-{}-{}".format(opt.task,
+                                       opt.sub_task,
+                                       opt.enc_type,
+                                       utils.time_int())
+    log_fname = basename + ".json"
+    log_path = os.path.join(RES, log_fname)
+    with open(log_path, 'w') as f:
+        f.write(str(utils.param_str(opt)) + '\n')
     # print(valid(model, valid_iter))
+
+    losses = []
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             seq1, seq2, lbl = batch.seq1, batch.seq2, batch.lbl
@@ -107,6 +117,7 @@ def train(model, iters, opt, criterion, optim):
             res = model(seq1, seq2)
             res_clf = res['res_clf']
             loss = criterion(res_clf.view(-1, 2), lbl)
+            losses.append(loss.item())
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()
@@ -119,11 +130,14 @@ def train(model, iters, opt, criterion, optim):
                 # print('\r')
                 accurracy, precision, recall, f1 = \
                     valid(model, valid_iter)
-                print('{\'Epoch\':%d, \'Format\':\'a/p/r/f\', \'Metrics\':[%.4f, %.4f, %.4f, %.4f]}' %
-                      (epoch, accurracy, precision, recall, f1))
+                loss_ave = np.array(losses).sum() / len(losses)
+                log_str = '{\'Epoch\':%d, \'Format\':\'a/l\', \'Metrics\':[%.4f, %.4f]}' % \
+                          (epoch, accurracy, loss_ave)
+                print(log_str)
+                with open(log_path, 'a+') as f:
+                    f.write(log_str + '\n')
 
         if (epoch + 1) % opt.save_per == 0:
-            basename = "{}-epoch-{}".format(opt.task, epoch)
             model_fname = basename + ".model"
             save_path = os.path.join(RES, model_fname)
             print('Saving to ' + save_path)
@@ -143,7 +157,8 @@ class Model(nn.Module):
             ntm_states=None,
             nse_states=None,
             stack=None,
-            tardis_states=None):
+            tardis_states=None,
+            enc_outputs=None):
 
         mask = seq.data.eq(self.padding_idx)
         len_total, bsz = seq.shape
@@ -155,7 +170,8 @@ class Model(nn.Module):
                  'ntm_states': ntm_states,
                  'nse_states': nse_states,
                  'stack': stack,
-                 'tardis_states': tardis_states}
+                 'tardis_states': tardis_states,
+                 'enc_outputs': enc_outputs}
         res = self.encoder(input)
         output = res['output']
         reps = torch.cat([output[lens[b] - 1, b, :].unsqueeze(0) for b in range(bsz)],
@@ -170,6 +186,7 @@ class Model(nn.Module):
         nse_states = None
         stack = None
         tardis_states = None
+        enc_outputs = None
         if 'ntm_states' in res1.keys() and \
             res1['ntm_states'] is not None:
             ntm_states = res1['ntm_states']
@@ -182,8 +199,16 @@ class Model(nn.Module):
         if 'tardis_states' in res1.keys() and \
             res1['tardis_states'] is not None:
             tardis_states = res1['tardis_states']
+        if 'enc_outputs' in res1.keys() and \
+            res1['enc_outputs'] is not None:
+            enc_outputs = res1['enc_outputs']
 
-        res2 = self.enc(seq2, ntm_states, nse_states, stack, tardis_states)
+        res2 = self.enc(seq2,
+                        ntm_states,
+                        nse_states,
+                        stack,
+                        tardis_states,
+                        enc_outputs)
         reps2 = res2['reps']
 
         if type(reps1) == tuple and \

@@ -36,10 +36,13 @@ class DecoderSimpRNN(nn.Module):
                           hidden_size=hdim,
                           dropout=dropout)
 
-    def forward(self, input, hid):
+    def forward(self, input):
+        inp = input['inp']
+        hid = input['hid']
+
         if type(hid) == tuple:
             hid = hid[0]
 
-        output, hid = self.rnn(input, hid)
+        output, hid = self.rnn(inp, hid)
         return {'output': output,
                 'hid': hid}

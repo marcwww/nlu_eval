@@ -24,6 +24,11 @@ class EncoderALSTM(nn.Module):
         lens = input['lens']
         bsz = embs.shape[1]
 
+        enc_outputs = None
+        if 'enc_outputs' in input.keys() and \
+            input['enc_outputs'] is not None:
+            enc_outputs = input['enc_outputs']
+
         h = self.h0.expand(1, bsz, self.hdim).contiguous()
         c = self.c0.expand(1, bsz, self.hdim).contiguous()
 
@@ -31,9 +36,13 @@ class EncoderALSTM(nn.Module):
         c_res = [None] * bsz
         output = []
         for t, emb in enumerate(embs):
-            if len(output) > 0:
-                hids = torch.cat(output, dim=0)
-                h = self.atten(h, hids)
+
+            if enc_outputs is None:
+                if len(output) > 0:
+                    hids = torch.cat(output, dim=0)
+                    h = self.atten(h, hids)
+            else:
+                h = self.atten(h, enc_outputs)
 
             o, (h, c) = self.rnn(emb.unsqueeze(0), (h, c))
             output.append(o)
