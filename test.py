@@ -29,36 +29,43 @@ if __name__ == '__main__':
 
     build_iters = None
     train = None
+    valid = None
     Model = None
     criterion = None
     if opt.task == 'prop-entail':
         build_iters = prop_entailment.build_iters
         train = prop_entailment.train
+        valid = prop_entailment.valid
         Model = prop_entailment.Model
 
     if opt.task == 'prop-entail-2enc':
         build_iters = prop_entailment_2enc.build_iters
         train = prop_entailment_2enc.train
+        valid = prop_entailment_2enc.valid
         Model = prop_entailment_2enc.Model
 
     if opt.task == 'rewriting':
         build_iters = rewriting.build_iters
         train = rewriting.train
+        valid = rewriting.valid
         Model = rewriting.Model
 
     if opt.task == 'rte':
         build_iters = rte.build_iters
         train = rte.train
+        valid = rte.valid
         Model = rte.Model
 
     if opt.task == 'scan':
         build_iters = scan.build_iters
         train = scan.train
+        valid = scan.valid
         Model = scan.Model
 
     if opt.task == 'pattern':
         build_iters = pattern.build_iters
         train = pattern.train
+        valid = pattern.valid
         Model = pattern.Model
 
     param_iter = {'ftrain': opt.ftrain,
@@ -262,5 +269,6 @@ if __name__ == '__main__':
     param_str = utils.param_str(opt)
     for key, val in param_str.items():
         print(str(key) + ': ' + str(val))
-    train(model, res_iters, opt, criterion, optimizer)
+
+    print(valid(model, res_iters['valid_iter']))
 

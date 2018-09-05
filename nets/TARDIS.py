@@ -4,6 +4,7 @@ import torch
 from macros import *
 from torch.nn import functional as F
 import utils
+import time
 from torch.nn.utils.rnn import pack_padded_sequence as pack, \
     pad_packed_sequence as unpack
 import crash_on_ipy
@@ -153,6 +154,7 @@ class EncoderTARDIS(nn.Module):
         for t, emb in enumerate(embs):
             # normalize??
             u = F.layer_norm(w_sum, normalized_shape=w_sum.shape[1:])
+
             r, w = self._read(h, emb, u)
             w_sum = w_sum + w
 
