@@ -113,20 +113,9 @@ class EncoderTARDIS(nn.Module):
             _, pos = torch.topk(w, k=1, dim=-1)
             pos = pos.squeeze(-1)
 
-        # grad???
-        # self.mem[range(bsz), pos, self.a:].data = val.squeeze(0)
-        # self.mem[range(bsz), pos, self.a:] = val.squeeze(0)
-        val = val.squeeze(0)
-        # mem: (bsz, N, a+c)
-        mem = list(self.mem)
-        for b in range(len(mem)):
-            a, c = mem[b][pos[b], :self.a], val[b]
-            cell = torch.cat([a, c], dim=-1).unsqueeze(0)
-            mem[b] = torch.cat([mem[b][:pos[b]],
-                                cell,
-                                mem[b][pos[b] + 1:]], dim=0).unsqueeze(0)
-
-        self.mem = torch.cat(mem, dim=0)
+        mem = self.mem.clone()
+        mem[range(bsz), pos, self.a:] = val.squeeze(0)
+        self.mem = mem
 
     def forward(self, input):
         # embs: (seq_len, bsz, edim)
@@ -289,20 +278,9 @@ class DecoderTARDIS(nn.Module):
             _, pos = torch.topk(w, k=1, dim=-1)
             pos = pos.squeeze(-1)
 
-        # grad???
-        # self.mem[range(bsz), pos, self.a:].data = val.squeeze(0)
-        # self.mem[range(bsz), pos, self.a:] = val.squeeze(0)
-        val = val.squeeze(0)
-        # mem: (bsz, N, a+c)
-        mem = list(self.mem)
-        for b in range(len(mem)):
-            a, c = mem[b][pos[b], :self.a], val[b]
-            cell = torch.cat([a, c], dim=-1).unsqueeze(0)
-            mem[b] = torch.cat([mem[b][:pos[b]],
-                                cell,
-                                mem[b][pos[b] + 1:]], dim=0).unsqueeze(0)
-
-        self.mem = torch.cat(mem, dim=0)
+        mem = self.mem.clone()
+        mem[range(bsz), pos, self.a:] = val.squeeze(0)
+        self.mem = mem
 
     def forward(self, input):
         # embs: (seq_len, bsz, edim)
