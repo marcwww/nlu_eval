@@ -169,12 +169,23 @@ def valid(model, valid_iter, rewriting_map):
 
     return nc/nt
 
-def train(model, iters, opt, criterion, optim):
+def train(model, iters, opt, criterion, optim, scheduler):
     train_iter = iters['train_iter']
     valid_iter = iters['valid_iter']
     rewriting_map = iters['rewriting_map']
 
+    basename = "{}-{}-{}-{}-{}".format(opt.task,
+                                    opt.sub_task,
+                                    opt.enc_type,
+                                    opt.dec_type,
+                                    utils.time_int())
+    log_fname = basename + ".json"
+    log_path = os.path.join(RES, log_fname)
+    with open(log_path, 'w') as f:
+        f.write(str(utils.param_str(opt)) + '\n')
     # print(valid(model, valid_iter, rewriting_map))
+
+    losses = []
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
             src, tar = batch.src, batch.tar
@@ -187,25 +198,33 @@ def train(model, iters, opt, criterion, optim):
             outputs = res['outputs']
             dec_voc_size = model.dec_voc_size
             loss = criterion(outputs.view(-1, dec_voc_size), tar.view(-1))
+            losses.append(loss.item())
             loss.backward()
             clip_grad_norm(model.parameters(), 5)
             optim.step()
-
             loss = {'trans_loss': loss.item()}
 
             utils.progress_bar(i / len(train_iter), loss, epoch)
-
             if (i + 1) % int(1 / 4 * len(train_iter)) == 0:
-
-                if epoch == 3:
-                    print('aaa')
-                # print('\r')
                 accurracy = valid(model, valid_iter, rewriting_map)
-                print('{\'Epoch\':%d, \'Format\':\'a\', \'Metric\':[%.4f]}' %
-                      (epoch, accurracy) )
+                loss_ave = np.array(losses).sum() / len(losses)
+                losses = []
+                log_str = '{\'Epoch\':%d, \'Format\':\'a/l\', \'Metrics\':[%.4f, %.4f]}' % \
+                          (epoch, accurracy, loss_ave)
+
+                lr = 0
+                for param_group in optim.param_groups:
+                    lr = param_group['lr']
+
+                print(log_str, 'lr:', lr)
+                with open(log_path, 'a+') as f:
+                    f.write(log_str + '\n')
+
+                scheduler.step(accurracy)
+                for param_group in optim.param_groups:
+                    print('learning rate:', param_group['lr'])
 
         if (epoch + 1) % opt.save_per == 0:
-            basename = "{}-epoch-{}".format(opt.task, epoch)
             model_fname = basename + ".model"
             save_path = os.path.join(RES, model_fname)
             print('Saving to ' + save_path)

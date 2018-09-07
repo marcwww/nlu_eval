@@ -131,6 +131,7 @@ def train(model, iters, opt, criterion, optim):
                 accurracy, precision, recall, f1 = \
                     valid(model, valid_iter)
                 loss_ave = np.array(losses).sum() / len(losses)
+                losses = []
                 log_str = '{\'Epoch\':%d, \'Format\':\'a/l\', \'Metrics\':[%.4f, %.4f]}' % \
                           (epoch, accurracy, loss_ave)
                 print(log_str)

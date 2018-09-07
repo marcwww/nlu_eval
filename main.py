@@ -7,6 +7,7 @@ import argparse
 import training
 from torch import nn
 from torch import optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tasks import prop_entailment, \
     prop_entailment_2enc, \
     rewriting, \
@@ -91,17 +92,20 @@ if __name__ == '__main__':
         embedding = nn.Embedding(num_embeddings=len(SEQ.vocab.itos),
                                  embedding_dim=opt.edim,
                                  padding_idx=SEQ.vocab.stoi[PAD])
+        embedding.weight.requires_grad = not opt.fix_emb
 
     if 'SRC' in res_iters.keys() and 'TAR' in res_iters.keys():
         SRC = res_iters['SRC']
         embedding_enc = nn.Embedding(num_embeddings=len(SRC.vocab.itos),
                                      embedding_dim=opt.edim,
                                      padding_idx=SRC.vocab.stoi[PAD])
+        embedding_enc.weight.requires_grad = not opt.fix_emb
 
         TAR = res_iters['TAR']
         embedding_dec = nn.Embedding(num_embeddings=len(TAR.vocab.itos),
                                  embedding_dim=opt.edim,
                                  padding_idx=TAR.vocab.stoi[PAD])
+        embedding_dec.weight.requires_grad = not opt.fix_emb
 
     location = opt.gpu if torch.cuda.is_available() and opt.gpu != -1 else 'cpu'
     device = torch.device(location)
@@ -259,8 +263,10 @@ if __name__ == '__main__':
     #                           alpha=0.95,
     #                           lr=1e-4)
 
+    scheduler = ReduceLROnPlateau(optimizer, mode='max',factor=0.5, patience=20)
+
     param_str = utils.param_str(opt)
     for key, val in param_str.items():
         print(str(key) + ': ' + str(val))
-    train(model, res_iters, opt, criterion, optimizer)
+    train(model, res_iters, opt, criterion, optimizer, scheduler)
 
