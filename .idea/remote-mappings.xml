@@ -6,7 +6,7 @@
         <remote-mappings server-id="python@sftp://kxwang@172.18.31.58:22/home/kxwang/.pyenv/versions/py364/bin/python">
           <settings>
             <list>
-              <mapping local-root="$PROJECT_DIR$" remote-root="/tmp/pycharm_project_253" />
+              <mapping local-root="$PROJECT_DIR$" remote-root="/home/kxwang/exp/nlu_eval" />
             </list>
           </settings>
         </remote-mappings>

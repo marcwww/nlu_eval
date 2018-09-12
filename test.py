@@ -270,5 +270,5 @@ if __name__ == '__main__':
     for key, val in param_str.items():
         print(str(key) + ': ' + str(val))
 
-    print(valid(model, res_iters['valid_iter']))
+    print(valid(model, res_iters['valid_iter'], res_iters['rewriting_map']))
 

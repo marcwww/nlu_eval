@@ -263,7 +263,7 @@ if __name__ == '__main__':
     #                           alpha=0.95,
     #                           lr=1e-4)
 
-    scheduler = ReduceLROnPlateau(optimizer, mode='max',factor=0.5, patience=20)
+    scheduler = ReduceLROnPlateau(optimizer, mode='max',factor=0.5, patience=10000)
 
     param_str = utils.param_str(opt)
     for key, val in param_str.items():

@@ -185,6 +185,7 @@ def train(model, iters, opt, criterion, optim, scheduler):
         f.write(str(utils.param_str(opt)) + '\n')
     # print(valid(model, valid_iter, rewriting_map))
 
+    best_performance = 0
     losses = []
     for epoch in range(opt.nepoch):
         for i, batch in enumerate(train_iter):
@@ -224,11 +225,12 @@ def train(model, iters, opt, criterion, optim, scheduler):
                 for param_group in optim.param_groups:
                     print('learning rate:', param_group['lr'])
 
-        if (epoch + 1) % opt.save_per == 0:
-            model_fname = basename + ".model"
-            save_path = os.path.join(RES, model_fname)
-            print('Saving to ' + save_path)
-            torch.save(model.state_dict(), save_path)
+                if accurracy > best_performance:
+                    best_performance = accurracy
+                    model_fname = basename + ".model"
+                    save_path = os.path.join(RES, model_fname)
+                    print('Saving to ' + save_path)
+                    torch.save(model.state_dict(), save_path)
 
 class Model(nn.Module):
 
